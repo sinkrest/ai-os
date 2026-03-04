@@ -1,5 +1,9 @@
 .env
 context/
 outputs/
-scripts/install-daily-news.sh
-outputs/news/logs/
+scripts/
+plans/
+reference/
+shell-aliases.md
+CLAUDE.md
+.claude/
