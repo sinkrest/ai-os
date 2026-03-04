@@ -67,30 +67,17 @@
       background: rgba(39,192,231,0.12);
     }
 
-    .nav-spacer { flex: 1; }
-
-    .nav-ext {
-      padding: .32rem .85rem;
-      border-radius: 7px;
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #8a9dba;
-      font-size: .82rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: color .18s, border-color .18s, background .18s;
-      white-space: nowrap;
+    .nav-sep {
+      color: rgba(255,255,255,0.15);
+      font-size: .75rem;
+      padding: 0 .1rem;
+      user-select: none;
     }
 
-    .nav-ext:hover {
-      color: #27c0e7;
-      border-color: rgba(39,192,231,0.3);
-      background: rgba(39,192,231,0.08);
-    }
-
-    .nav-ext::after {
-      content: ' ↗';
-      font-size: .7em;
-      opacity: .5;
+    .nav-app-tab {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ── Content shell ─────────────────────────────────────── */
@@ -244,45 +231,6 @@
     .footer a { color: #27c0e7; text-decoration: none; }
 
     /* ── App viewer ────────────────────────────────────────── */
-    #panel-app {
-      overflow: hidden;
-    }
-
-    .app-bar {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      padding: .5rem 1rem;
-      background: rgba(11,22,40,0.95);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      flex-shrink: 0;
-    }
-
-    .app-bar-back {
-      padding: .28rem .8rem;
-      border-radius: 7px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: none;
-      color: #8a9dba;
-      font-size: .8rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: color .18s, border-color .18s, background .18s;
-    }
-
-    .app-bar-back:hover {
-      color: #27c0e7;
-      border-color: rgba(39,192,231,0.3);
-      background: rgba(39,192,231,0.08);
-    }
-
-    .app-bar-title {
-      font-size: .82rem;
-      font-weight: 600;
-      color: #94a7c8;
-    }
-
     #app-frame {
       flex: 1;
       width: 100%;
@@ -329,6 +277,8 @@
   <span class="nav-logo">⚡ AI OS</span>
   <button class="nav-tab active" data-tab="home">🏠 Home</button>
   <button class="nav-tab" data-tab="snake">🐍 Snake</button>
+  <span class="nav-sep" id="nav-sep" style="display:none">›</span>
+  <button class="nav-tab nav-app-tab active" id="nav-app-tab" style="display:none"></button>
 </nav>
 
 <!-- ── Content ────────────────────────────────────────────── -->
@@ -407,10 +357,6 @@
 
   <!-- App viewer -->
   <div id="panel-app" class="tab-panel">
-    <div class="app-bar">
-      <button class="app-bar-back" onclick="switchTab('home')">← Home</button>
-      <span class="app-bar-title" id="app-bar-title"></span>
-    </div>
     <iframe id="app-frame" src="" title="App"></iframe>
   </div>
 
@@ -426,21 +372,34 @@
 
 <!-- ── Tab switching ──────────────────────────────────────── -->
 <script>
+  const appTab = document.getElementById('nav-app-tab');
+  const appSep = document.getElementById('nav-sep');
+
   function switchTab(name) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
-    const btn = document.querySelector('[data-tab="' + name + '"]');
+    const btn = document.querySelector('.nav-tab[data-tab="' + name + '"]');
     if (btn) btn.classList.add('active');
+    if (name !== 'app') {
+      appTab.style.display = 'none';
+      appSep.style.display = 'none';
+      document.getElementById('app-frame').src = '';
+    }
   }
 
   function openApp(src, title) {
+    appTab.textContent = title;
+    appTab.style.display = '';
+    appSep.style.display = '';
     document.getElementById('app-frame').src = src;
-    document.getElementById('app-bar-title').textContent = title;
-    switchTab('app');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-app').classList.add('active');
+    appTab.classList.add('active');
   }
 
-  document.querySelectorAll('.nav-tab').forEach(btn => {
+  document.querySelectorAll('.nav-tab[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 </script>
