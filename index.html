@@ -277,7 +277,6 @@
 <nav class="nav">
   <span class="nav-logo">⚡ AI OS</span>
   <button class="nav-tab active" data-tab="home">🏠 Home</button>
-  <button class="nav-tab" data-tab="snake">🐍 Snake</button>
   <span class="nav-divider" id="nav-sep" style="display:none"></span>
   <button class="nav-tab nav-app-tab" id="nav-app-tab" style="display:none"></button>
 </nav>
@@ -380,12 +379,17 @@
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
-    const btn = document.querySelector('.nav-tab[data-tab="' + name + '"]');
-    if (btn) btn.classList.add('active');
-    if (name !== 'app') {
+    if (name === 'home') {
+      document.querySelector('[data-tab="home"]').classList.add('active');
       appTab.style.display = 'none';
       appSep.style.display = 'none';
       document.getElementById('app-frame').src = '';
+    } else if (name === 'snake') {
+      document.querySelector('[data-tab="home"]').classList.remove('active');
+      appTab.textContent = '🐍 Snake';
+      appTab.style.display = '';
+      appSep.style.display = '';
+      appTab.classList.add('active');
     }
   }
 
