@@ -67,15 +67,16 @@
       background: rgba(39,192,231,0.12);
     }
 
-    .nav-sep {
-      color: rgba(255,255,255,0.15);
-      font-size: .75rem;
-      padding: 0 .1rem;
-      user-select: none;
+    .nav-divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(255,255,255,0.1);
+      margin: 0 .2rem;
+      flex-shrink: 0;
     }
 
     .nav-app-tab {
-      max-width: 220px;
+      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -277,8 +278,8 @@
   <span class="nav-logo">⚡ AI OS</span>
   <button class="nav-tab active" data-tab="home">🏠 Home</button>
   <button class="nav-tab" data-tab="snake">🐍 Snake</button>
-  <span class="nav-sep" id="nav-sep" style="display:none">›</span>
-  <button class="nav-tab nav-app-tab active" id="nav-app-tab" style="display:none"></button>
+  <span class="nav-divider" id="nav-sep" style="display:none"></span>
+  <button class="nav-tab nav-app-tab" id="nav-app-tab" style="display:none"></button>
 </nav>
 
 <!-- ── Content ────────────────────────────────────────────── -->
