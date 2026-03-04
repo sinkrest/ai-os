@@ -1,0 +1,5 @@
+.env
+context/
+outputs/
+scripts/install-daily-news.sh
+outputs/news/logs/

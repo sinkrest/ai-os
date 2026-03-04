@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.zshrc)",
+      "Bash(echo \"alias cs=''claude \"\"/prime\"\"''\")",
+      "Bash(echo \"alias cr=''claude --dangerously-skip-permissions \"\"/prime\"\"''\")",
+      "Bash(cr:*)",
+      "Bash(printf:*)",
+      "WebSearch"
+    ]
+  }
+}
