@@ -2,30 +2,96 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Snake</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake — AI OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-  background: #07070f;
+  background: #0b1628;
+  font-family: 'Inter', sans-serif;
+  color: #e4eaf4;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.nav a {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #8a9dba;
+  padding: .45rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+  transition: all .2s;
+}
+
+.nav a:hover {
+  border-color: rgba(39,192,231,0.4);
+  color: #27c0e7;
+  background: rgba(39,192,231,0.1);
+}
+
+.game-wrap {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  font-family: 'Courier New', monospace;
+  padding: 2rem 1rem;
+  gap: 0;
 }
-canvas { display: block; }
+
+.game-title {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #27c0e7;
+  margin-bottom: 1.2rem;
+  opacity: .7;
+}
+
+canvas {
+  display: block;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 0 40px rgba(0,255,136,0.06), 0 0 0 1px rgba(39,192,231,0.06);
+}
+
 #hint {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 11px;
-  color: #1e1e2e;
+  color: #2a3a55;
   letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 </style>
 </head>
 <body>
-<canvas id="c" width="400" height="400"></canvas>
-<div id="hint">WASD / ARROWS &nbsp;·&nbsp; SPACE to start</div>
+
+<nav class="nav">
+  <a href="index.html">← Web Apps</a>
+</nav>
+
+<div class="game-wrap">
+  <div class="game-title">🐍 Snake</div>
+  <canvas id="c" width="400" height="400"></canvas>
+  <div id="hint">WASD / ARROWS &nbsp;·&nbsp; SPACE to start</div>
+</div>
 <script>
 const CELL = 20, COLS = 20, ROWS = 20;
 const canvas = document.getElementById('c');
