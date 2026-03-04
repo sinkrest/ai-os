@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Usage Dashboard — Roman Martins Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0b1628; color: #e4eaf4; margin: 0; min-height: 100vh; }
+
+        .hero {
+            background: linear-gradient(135deg, #0b1628 0%, #132744 40%, #1a3a6b 70%, #1e488f 100%);
+            padding: 4rem 1.5rem 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -15%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(39,192,231,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(30,72,143,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(39,192,231,0.15);
+            border: 1px solid rgba(39,192,231,0.3);
+            color: #27c0e7;
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: .4rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1.2rem;
+        }
+        h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800; color: #fff; margin-bottom: .4rem; position: relative; }
+        h1 span { color: #27c0e7; }
+        .subtitle { color: #94a7c8; font-size: 1rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: .6rem;
+            padding: 1.2rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-wrap: wrap;
+        }
+        .nav a {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #8a9dba;
+            padding: .5rem 1.1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: .85rem;
+            font-weight: 600;
+            transition: all .2s;
+        }
+        .nav a:hover, .nav a.active { border-color: rgba(39,192,231,0.4); color: #27c0e7; background: rgba(39,192,231,0.1); }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            padding: 2rem 1rem 2.5rem;
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat .num { font-size: 1.8rem; font-weight: 800; color: #27c0e7; }
+        .stat .label { font-size: .78rem; color: #5d7da3; margin-top: .15rem; text-transform: uppercase; letter-spacing: .06em; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.4rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+            position: relative;
+            z-index: 2;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            padding: 1.8rem;
+            text-decoration: none;
+            color: #e4eaf4;
+            transition: border-color .25s, transform .25s, box-shadow .25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #27c0e7, #1e488f);
+            opacity: 0;
+            transition: opacity .25s;
+        }
+        .card:hover {
+            border-color: rgba(39,192,231,0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(39,192,231,0.1);
+        }
+        .card:hover::before { opacity: 1; }
+        .card .value { font-size: 2.5rem; font-weight: 800; color: #27c0e7; margin-bottom: .5rem; }
+        .card .detail { font-size: .85rem; color: #8a9dba; }
+        .card .tag {
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            padding: .25rem .7rem;
+            border-radius: 4px;
+            background: rgba(39,192,231,0.1);
+            color: #27c0e7;
+            border: 1px solid rgba(39,192,231,0.2);
+        }
+
+        .table-section {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.5rem 3rem;
+            position: relative;
+            z-index: 2;
+        }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        th {
+            background: rgba(255,255,255,0.06);
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-size: .85rem;
+            color: #8a9dba;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: .9rem;
+        }
+        tr:last-child td { border-bottom: none; }
+        .timestamp { color: #5d7da3; }
+        .status { color: #27c0e7; font-weight: 600; }
+
+        .chart-section {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            padding: 2rem 1.8rem;
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            position: relative;
+            z-index: 2;
+        }
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27c0e7, #1e488f);
+            width: 13%;
+            border-radius: 10px;
+            transition: width .3s ease;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #4a6080;
+            font-size: .82rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .footer a { color: #27c0e7; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="badge">📊 AI Insights</div>
+        <h1>AI Usage <span>Dashboard</span></h1>
+        <p class="subtitle">Real-time token tracking, model performance, and execution history.</p>
+    </section>
+
+    <div class="nav">
+        <a href="index.html">🏠 Hub</a>
+        <a href="dashboard.html" class="active">📊 AI Dashboard</a>
+        <a href="toolkit.html">🛠️ PD Toolkit</a>
+        <a href="newsletter.html">📬 Newsletter</a>
+        <a href="snake.html">🏭 Pipeline Game</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat"><div class="num">26.4K</div><div class="label">Total Tokens</div></div>
+        <div class="stat"><div class="num">20</div><div class="label">Executions</div></div>
+        <div class="stat"><div class="num">Opus 4.6</div><div class="label">Active Model</div></div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="value">26.4K</div>
+            <div class="detail">Tokens consumed (13% of 200K context window)</div>
+            <span class="tag">Current Session</span>
+        </div>
+        <div class="card">
+            <div class="value">20</div>
+            <div class="detail">Latest executions tracked</div>
+            <span class="tag">Latest Runs</span>
+        </div>
+        <div class="card">
+            <div class="value">Haiku → Opus</div>
+            <div class="detail">Model chain: Started on Haiku, switched to Opus</div>
+            <span class="tag">Multi-Model</span>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <h2 class="section-title">📈 Recent Executions (Latest 20)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Task</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>20</strong></td>
+                    <td>Update dashboard UI to hub style</td>
+                    <td class="timestamp">22:53 UTC</td>
+                    <td class="status">✓ Running</td>
+                </tr>
+                <tr>
+                    <td><strong>19</strong></td>
+                    <td>Switch model to Opus & fetch hub design</td>
+                    <td class="timestamp">22:52 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>18</strong></td>
+                    <td>Update AI usage dashboard on github</td>
+                    <td class="timestamp">22:50 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>17</strong></td>
+                    <td>Model & feature availability check</td>
+                    <td class="timestamp">22:49 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>16</strong></td>
+                    <td>OpenClaw update & upgrade</td>
+                    <td class="timestamp">22:48 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>15</strong></td>
+                    <td>Health check with model switch</td>
+                    <td class="timestamp">22:41 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>14</strong></td>
+                    <td>Security audit & gateway status</td>
+                    <td class="timestamp">22:38 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>13</strong></td>
+                    <td>Session initialization</td>
+                    <td class="timestamp">22:35 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>12</strong></td>
+                    <td>Heartbeat routine check</td>
+                    <td class="timestamp">Feb 20, 21:17 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>11</strong></td>
+                    <td>Task execution handler</td>
+                    <td class="timestamp">Feb 20, 21:16 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>10</strong></td>
+                    <td>Heartbeat poll</td>
+                    <td class="timestamp">Feb 20, 19:28 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>9</strong></td>
+                    <td>Cron job announcement</td>
+                    <td class="timestamp">Feb 20, 19:00 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>8</strong></td>
+                    <td>Message routing</td>
+                    <td class="timestamp">Feb 20, 14:17 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>7</strong></td>
+                    <td>Task execution</td>
+                    <td class="timestamp">Feb 20, 14:16 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>6</strong></td>
+                    <td>Heartbeat check</td>
+                    <td class="timestamp">Feb 20, 03:28 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>5</strong></td>
+                    <td>Message handler</td>
+                    <td class="timestamp">Feb 19, 21:09 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>4</strong></td>
+                    <td>Task execution</td>
+                    <td class="timestamp">Feb 19, 21:03 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td>Conversation routing</td>
+                    <td class="timestamp">Feb 19, 20:58 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>2</strong></td>
+                    <td>Message handling</td>
+                    <td class="timestamp">Feb 19, 20:57 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+                <tr>
+                    <td><strong>1</strong></td>
+                    <td>Initial request</td>
+                    <td class="timestamp">Feb 19, 20:44 UTC</td>
+                    <td class="status">✓ Complete</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-section">
+        <h3 class="chart-title">📦 Context Window Usage</h3>
+        <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1rem;">
+            <span style="color: #8a9dba;">26.4K / 200K tokens</span>
+            <strong style="color: #27c0e7;">13%</strong>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <p style="font-size: .85rem; color: #5d7da3; margin-top: 1rem;">179.6K tokens remaining in current context window</p>
+    </div>
+
+    <div class="footer">
+        Last updated: Saturday, Feb 21 2026 — 11:53 PM CET
+        <br>
+        <a href="https://github.com/sinkrest/lab">View Source</a> · <a href="index.html">← Back to Hub</a>
+    </div>
+
+<script>
+document.querySelectorAll("a[href=\"index.html\"]").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    if (window.parent !== window && window.parent.switchTab) window.parent.switchTab("home");
+    else window.location.href = "../index.html";
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Command Center — Roman Martins Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #060d1a; color: #e4eaf4; min-height: 100vh; overflow-x: hidden; }
+
+        .back { position: fixed; top: .8rem; left: .8rem; color: #27c0e7; text-decoration: none; font-size: .82rem; z-index: 100; opacity: .7; transition: opacity .2s; }
+        .back:hover { opacity: 1; }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .6rem 1.2rem;
+            background: rgba(6,13,26,0.95);
+            border-bottom: 1px solid rgba(39,192,231,0.15);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar .logo { font-weight: 800; font-size: .95rem; color: #fff; }
+        .topbar .logo span { color: #27c0e7; }
+        .topbar .status { display: flex; align-items: center; gap: 1.2rem; }
+        .topbar .dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); } 50% { box-shadow: 0 0 0 6px rgba(46,204,113,0); } }
+        .topbar .clock { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: #27c0e7; }
+        .topbar .sys { font-size: .72rem; color: #5d7da3; }
+
+        /* Main grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: .8rem;
+            padding: .8rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+        /* Panels */
+        .panel {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(39,192,231,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(39,192,231,0.3), transparent);
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .6rem .9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+        }
+        .panel-header h3 {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #5d7da3;
+        }
+        .panel-header .indicator { font-size: .68rem; color: #2ecc71; font-weight: 600; }
+        .panel-body { padding: .8rem; }
+
+        /* Supply chain canvas */
+        .network-panel { grid-column: 2; grid-row: 1 / 3; min-height: 420px; }
+        #networkCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+        /* KPI Gauges */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+        .kpi {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: .7rem;
+            text-align: center;
+            position: relative;
+        }
+        .kpi .kpi-label { font-size: .65rem; color: #5d7da3; text-transform: uppercase; letter-spacing: .05em; }
+        .kpi .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; margin: .3rem 0 .1rem; }
+        .kpi .kpi-delta { font-size: .7rem; font-weight: 600; }
+        .kpi .kpi-delta.up { color: #2ecc71; }
+        .kpi .kpi-delta.down { color: #e74c3c; }
+
+        /* Mini gauge */
+        .gauge-ring { position: relative; width: 56px; height: 56px; margin: .4rem auto; }
+        .gauge-ring svg { transform: rotate(-90deg); }
+        .gauge-ring .value { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 700; color: #fff; }
+
+        /* Log feed */
+        .log-feed {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            color: #5d7da3;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+        .log-feed .log-entry { border-bottom: 1px solid rgba(255,255,255,0.03); padding: .2rem 0; display: flex; gap: .5rem; }
+        .log-feed .log-time { color: #3a506b; min-width: 55px; }
+        .log-feed .log-msg { color: #8a9dba; }
+        .log-feed .log-ok { color: #2ecc71; }
+        .log-feed .log-warn { color: #f39c12; }
+        .log-feed .log-err { color: #e74c3c; }
+
+        /* Timeline */
+        .timeline { display: flex; gap: 2px; height: 50px; align-items: flex-end; }
+        .tbar { flex: 1; border-radius: 2px 2px 0 0; transition: height .3s; min-width: 3px; }
+
+        /* Scenario panel */
+        .scenario-controls { display: flex; flex-direction: column; gap: .6rem; }
+        .sc-row { display: flex; align-items: center; gap: .6rem; }
+        .sc-row label { font-size: .78rem; color: #8a9dba; min-width: 90px; }
+        .sc-row input[type="range"] { flex: 1; accent-color: #27c0e7; }
+        .sc-row .sc-val { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: #27c0e7; min-width: 36px; text-align: right; font-weight: 600; }
+        .sc-btn {
+            background: linear-gradient(90deg, #27c0e7, #1e488f);
+            color: #fff;
+            border: none;
+            padding: .55rem 1.2rem;
+            border-radius: 7px;
+            font-size: .85rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: transform .15s, box-shadow .2s;
+            margin-top: .3rem;
+        }
+        .sc-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(39,192,231,0.25); }
+
+        /* Risk matrix */
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+        .risk-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .6rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            transition: transform .2s, filter .2s;
+            cursor: pointer;
+        }
+        .risk-cell:hover { transform: scale(1.15); filter: brightness(1.3); z-index: 2; }
+        .risk-cell.active { outline: 2px solid #fff; outline-offset: 1px; }
+
+        /* World dots */
+        .world-strip {
+            display: flex;
+            justify-content: space-around;
+            padding: .5rem 0;
+        }
+        .world-dot {
+            text-align: center;
+        }
+        .world-dot .flag { font-size: 1.2rem; }
+        .world-dot .wname { font-size: .62rem; color: #5d7da3; }
+        .world-dot .wstatus { font-size: .6rem; font-weight: 600; }
+        .world-dot .wstatus.online { color: #2ecc71; }
+        .world-dot .wstatus.delayed { color: #f39c12; }
+
+        /* Bottom full-width */
+        .full-width { grid-column: 1 / -1; }
+
+        /* Production throughput */
+        .throughput { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
+        .throughput-gauge { text-align: center; }
+        .throughput-gauge canvas { display: block; margin: 0 auto; }
+        .throughput-gauge .tg-label { font-size: .7rem; color: #5d7da3; margin-top: .3rem; text-transform: uppercase; }
+        .throughput-gauge .tg-val { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: #27c0e7; }
+
+        /* Alert ticker */
+        .ticker {
+            background: rgba(39,192,231,0.05);
+            border-top: 1px solid rgba(39,192,231,0.1);
+            padding: .4rem 1rem;
+            font-size: .72rem;
+            color: #7a92b5;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker-inner {
+            display: inline-block;
+            animation: scroll 40s linear infinite;
+        }
+        @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+        .ticker .alert { margin-right: 3rem; }
+        .ticker .alert span { font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="back">← Hub</a>
+
+<div class="topbar">
+    <div class="logo">⚡ Industrial <span>Command Center</span></div>
+    <div class="status">
+        <div class="sys">SYSTEM NOMINAL</div>
+        <div class="dot"></div>
+        <div class="clock" id="clock">--:--:--</div>
+    </div>
+</div>
+
+<div class="grid">
+
+    <!-- LEFT COL: KPIs -->
+    <div class="panel">
+        <div class="panel-header"><h3>📊 Key Metrics</h3><div class="indicator">● LIVE</div></div>
+        <div class="panel-body">
+            <div class="kpi-grid" id="kpiGrid"></div>
+        </div>
+    </div>
+
+    <!-- CENTER: Network -->
+    <div class="panel network-panel">
+        <div class="panel-header"><h3>🌐 Supply Chain Network</h3><div class="indicator">● ACTIVE</div></div>
+        <canvas id="networkCanvas"></canvas>
+    </div>
+
+    <!-- RIGHT COL: Scenario -->
+    <div class="panel">
+        <div class="panel-header"><h3>🎛️ What-If Simulator</h3><div class="indicator">INTERACTIVE</div></div>
+        <div class="panel-body">
+            <div class="scenario-controls" id="scenarioControls"></div>
+        </div>
+    </div>
+
+    <!-- LEFT: Risk Matrix -->
+    <div class="panel">
+        <div class="panel-header"><h3>⚠️ Risk Heat Map</h3><div class="indicator" id="riskLevel">LOW</div></div>
+        <div class="panel-body">
+            <div style="display:flex;gap:.6rem;">
+                <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:.6rem;color:#5d7da3;padding:.1rem 0;">
+                    <span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+                </div>
+                <div style="flex:1;">
+                    <div class="risk-matrix" id="riskMatrix"></div>
+                    <div style="display:flex;justify-content:space-between;font-size:.6rem;color:#5d7da3;margin-top:.2rem;">
+                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:.5rem;font-size:.62rem;color:#5d7da3;">
+                <span>← Likelihood →</span><span>↑ Impact ↑</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Activity Log -->
+    <div class="panel">
+        <div class="panel-header"><h3>📋 Activity Feed</h3><div class="indicator" id="logCount">0 events</div></div>
+        <div class="panel-body">
+            <div class="log-feed" id="logFeed"></div>
+        </div>
+    </div>
+
+    <!-- BOTTOM: Global Operations -->
+    <div class="panel full-width">
+        <div class="panel-header"><h3>🏭 Global Production Lines</h3><div class="indicator">● 6 FACILITIES</div></div>
+        <div class="panel-body">
+            <div class="world-strip" id="worldStrip"></div>
+            <div style="margin-top:.8rem;">
+                <div style="font-size:.68rem;color:#5d7da3;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;">Throughput (24h rolling)</div>
+                <div class="timeline" id="throughputTimeline"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ticker -->
+<div class="ticker">
+    <div class="ticker-inner" id="ticker"></div>
+</div>
+
+<script>
+// ====== CLOCK ======
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB', { hour12: false });
+    requestAnimationFrame(() => setTimeout(updateClock, 1000));
+}
+updateClock();
+
+// ====== KPIs ======
+const kpis = [
+    { label: 'OEE', value: '87.3%', delta: '+2.1%', dir: 'up', color: '#2ecc71' },
+    { label: 'Yield Rate', value: '96.1%', delta: '+0.4%', dir: 'up', color: '#27c0e7' },
+    { label: 'Cycle Time', value: '34.2s', delta: '-1.8s', dir: 'up', color: '#2ecc71' },
+    { label: 'Defect Rate', value: '0.12%', delta: '-0.03%', dir: 'up', color: '#2ecc71' },
+    { label: 'Inventory Turn', value: '12.4x', delta: '+0.8x', dir: 'up', color: '#27c0e7' },
+    { label: 'Lead Time', value: '18.5d', delta: '+1.2d', dir: 'down', color: '#f39c12' },
+    { label: 'MTBF', value: '842h', delta: '+26h', dir: 'up', color: '#2ecc71' },
+    { label: 'Cost/Unit', value: '$4.21', delta: '-$0.14', dir: 'up', color: '#2ecc71' },
+];
+const kpiGrid = document.getElementById('kpiGrid');
+kpis.forEach(k => {
+    kpiGrid.innerHTML += `<div class="kpi">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+        <div class="kpi-delta ${k.dir}">${k.dir === 'up' ? '▲' : '▼'} ${k.delta}</div>
+    </div>`;
+});
+
+// ====== SUPPLY CHAIN NETWORK ======
+const nc = document.getElementById('networkCanvas');
+const nctx = nc.getContext('2d');
+let nodes = [], edges = [], particles = [];
+const nodeTypes = [
+    { name: 'Raw Materials', icon: '⛏️', x: .08, y: .3, color: '#e67e22', size: 22 },
+    { name: 'Supplier A', icon: '🏗️', x: .2, y: .15, color: '#f39c12', size: 18 },
+    { name: 'Supplier B', icon: '🏗️', x: .2, y: .5, color: '#f39c12', size: 18 },
+    { name: 'Logistics Hub', icon: '🚛', x: .38, y: .32, color: '#9b59b6', size: 20 },
+    { name: 'Factory Floor', icon: '🏭', x: .55, y: .25, color: '#27c0e7', size: 26 },
+    { name: 'Quality Lab', icon: '🔬', x: .55, y: .55, color: '#2ecc71', size: 18 },
+    { name: 'Assembly', icon: '⚙️', x: .7, y: .35, color: '#3498db', size: 22 },
+    { name: 'Warehouse', icon: '📦', x: .82, y: .2, color: '#1abc9c', size: 18 },
+    { name: 'Distribution', icon: '✈️', x: .82, y: .5, color: '#e74c3c', size: 18 },
+    { name: 'Customer', icon: '🏢', x: .94, y: .35, color: '#2ecc71', size: 22 },
+];
+const edgeDef = [[0,1],[0,2],[1,3],[2,3],[3,4],[4,5],[4,6],[5,6],[6,7],[6,8],[7,9],[8,9]];
+
+function resizeCanvas() {
+    const rect = nc.parentElement.getBoundingClientRect();
+    nc.width = rect.width;
+    nc.height = rect.height - 36;
+    nodes = nodeTypes.map(n => ({ ...n, px: n.x * nc.width, py: n.y * nc.height }));
+    edges = edgeDef.map(([a,b]) => ({ from: a, to: b }));
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// Particles flowing along edges
+function spawnParticle() {
+    const e = edges[Math.floor(Math.random() * edges.length)];
+    const from = nodes[e.from], to = nodes[e.to];
+    particles.push({ x: from.px, y: from.py, tx: to.px, ty: to.py, t: 0, speed: .003 + Math.random() * .006, color: from.color });
+}
+setInterval(spawnParticle, 300);
+
+let hoveredNode = -1;
+nc.addEventListener('mousemove', e => {
+    const rect = nc.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    hoveredNode = -1;
+    nodes.forEach((n, i) => {
+        if (Math.hypot(mx - n.px, my - n.py) < n.size + 8) hoveredNode = i;
+    });
+});
+
+function drawNetwork() {
+    nctx.clearRect(0, 0, nc.width, nc.height);
+
+    // Edges
+    edges.forEach(e => {
+        const from = nodes[e.from], to = nodes[e.to];
+        nctx.beginPath();
+        nctx.moveTo(from.px, from.py);
+        nctx.lineTo(to.px, to.py);
+        nctx.strokeStyle = 'rgba(39,192,231,0.12)';
+        nctx.lineWidth = 1.5;
+        nctx.stroke();
+    });
+
+    // Particles
+    particles = particles.filter(p => p.t <= 1);
+    particles.forEach(p => {
+        p.t += p.speed;
+        p.x = p.x + (p.tx - p.x) * p.speed * 3;
+        p.y = p.y + (p.ty - p.y) * p.speed * 3;
+        const x = (1 - p.t) * (p.tx - (p.tx - p.x) / (p.speed * 3)) + p.t * p.tx;
+        const realX = p.x, realY = p.y;
+        nctx.beginPath();
+        nctx.arc(realX, realY, 2.5, 0, Math.PI * 2);
+        nctx.fillStyle = p.color + 'cc';
+        nctx.shadowColor = p.color;
+        nctx.shadowBlur = 8;
+        nctx.fill();
+        nctx.shadowBlur = 0;
+    });
+
+    // Nodes
+    nodes.forEach((n, i) => {
+        const hovered = i === hoveredNode;
+        const s = hovered ? n.size + 6 : n.size;
+
+        // Glow
+        nctx.beginPath();
+        nctx.arc(n.px, n.py, s + 8, 0, Math.PI * 2);
+        const grd = nctx.createRadialGradient(n.px, n.py, s * .5, n.px, n.py, s + 8);
+        grd.addColorStop(0, n.color + '22');
+        grd.addColorStop(1, 'transparent');
+        nctx.fillStyle = grd;
+        nctx.fill();
+
+        // Circle
+        nctx.beginPath();
+        nctx.arc(n.px, n.py, s, 0, Math.PI * 2);
+        nctx.fillStyle = n.color + (hovered ? '44' : '22');
+        nctx.strokeStyle = n.color + (hovered ? 'cc' : '66');
+        nctx.lineWidth = hovered ? 2.5 : 1.5;
+        nctx.fill();
+        nctx.stroke();
+
+        // Icon
+        nctx.font = `${s * .8}px serif`;
+        nctx.textAlign = 'center';
+        nctx.textBaseline = 'middle';
+        nctx.fillText(n.icon, n.px, n.py);
+
+        // Label
+        if (hovered) {
+            nctx.font = '600 11px Inter';
+            nctx.fillStyle = '#fff';
+            nctx.fillText(n.name, n.px, n.py + s + 14);
+        }
+    });
+
+    requestAnimationFrame(drawNetwork);
+}
+drawNetwork();
+
+// ====== SCENARIO SIMULATOR ======
+const scenarios = [
+    { label: 'Demand Surge', min: 0, max: 200, val: 100, unit: '%' },
+    { label: 'Supplier Risk', min: 0, max: 10, val: 3, unit: '/10' },
+    { label: 'Lead Time', min: 5, max: 60, val: 18, unit: 'days' },
+    { label: 'Automation', min: 0, max: 100, val: 65, unit: '%' },
+    { label: 'Workforce', min: 50, max: 200, val: 100, unit: '%' },
+];
+const scEl = document.getElementById('scenarioControls');
+scenarios.forEach((s, i) => {
+    scEl.innerHTML += `<div class="sc-row">
+        <label>${s.label}</label>
+        <input type="range" min="${s.min}" max="${s.max}" value="${s.val}" id="sc${i}" oninput="document.getElementById('scv${i}').textContent=this.value+'${s.unit}'">
+        <div class="sc-val" id="scv${i}">${s.val}${s.unit}</div>
+    </div>`;
+});
+scEl.innerHTML += `<button class="sc-btn" onclick="runScenario()">▶ Run Simulation</button>
+<div id="scenarioResult" style="margin-top:.6rem;font-size:.82rem;color:#8a9dba;line-height:1.5;"></div>`;
+
+function runScenario() {
+    const vals = scenarios.map((_, i) => +document.getElementById('sc' + i).value);
+    const demand = vals[0], risk = vals[1], lead = vals[2], auto = vals[3], work = vals[4];
+
+    const efficiency = Math.min(99, 70 + auto * 0.2 - risk * 2 + (work - 100) * 0.05).toFixed(1);
+    const throughput = Math.round(1000 * (demand / 100) * (efficiency / 100) * (work / 100));
+    const costImpact = ((demand / 100 - 1) * 15 + risk * 3 - (auto - 50) * 0.1).toFixed(1);
+    const riskScore = Math.min(10, risk + (demand > 150 ? 2 : 0) + (lead > 30 ? 1 : 0) - auto * 0.02).toFixed(1);
+
+    const color = riskScore < 4 ? '#2ecc71' : riskScore < 7 ? '#f39c12' : '#e74c3c';
+    document.getElementById('scenarioResult').innerHTML =
+        `<div style="border-left:3px solid ${color};padding-left:.6rem;">
+        <strong>Simulation Result:</strong><br>
+        OEE: <span style="color:#27c0e7;font-weight:700">${efficiency}%</span> · 
+        Throughput: <span style="color:#27c0e7;font-weight:700">${throughput}</span> units/day<br>
+        Cost Impact: <span style="color:${costImpact > 0 ? '#e74c3c' : '#2ecc71'};font-weight:700">${costImpact > 0 ? '+' : ''}${costImpact}%</span> · 
+        Risk: <span style="color:${color};font-weight:700">${riskScore}/10</span>
+        </div>`;
+
+    addLogEntry('Scenario simulation executed', 'ok');
+}
+
+// ====== RISK MATRIX ======
+const riskColors = [
+    ['#2ecc71','#2ecc71','#f39c12','#f39c12','#e74c3c'],
+    ['#2ecc71','#f39c12','#f39c12','#e74c3c','#e74c3c'],
+    ['#f39c12','#f39c12','#e74c3c','#e74c3c','#e74c3c'],
+    ['#f39c12','#e74c3c','#e74c3c','#c0392b','#c0392b'],
+    ['#e74c3c','#e74c3c','#c0392b','#c0392b','#8e0000'],
+];
+const riskLabels = [
+    ['Seal wear','Voltage sag','Motor heat','Bearing fail','Shaft break'],
+    ['Corrosion','Weld crack','PCB fault','Pump leak','Gear strip'],
+    ['Vibration','Overload','Sensor drift','Coolant loss','Fire risk'],
+    ['EMI noise','Belt slip','Fatigue','Press jam','Explosion'],
+    ['Tolerance','Alignment','Firmware','Hydraulic','Structural'],
+];
+const riskActive = [[0,3],[1,2],[2,4],[3,1],[4,0]];
+const rmEl = document.getElementById('riskMatrix');
+for (let r = 4; r >= 0; r--) {
+    for (let c = 0; c < 5; c++) {
+        const isActive = riskActive.some(a => a[0] === r && a[1] === c);
+        rmEl.innerHTML += `<div class="risk-cell ${isActive ? 'active' : ''}" 
+            style="background:${riskColors[r][c]}${isActive ? 'cc' : '33'}"
+            title="${riskLabels[r][c]}: Likelihood ${c+1}, Impact ${r+1}">${isActive ? '●' : ''}</div>`;
+    }
+}
+
+// ====== ACTIVITY LOG ======
+const logMessages = [
+    ['Line 3 calibration complete', 'ok'],
+    ['Supplier B shipment delayed 2h', 'warn'],
+    ['Quality check passed — batch #4821', 'ok'],
+    ['Predictive maintenance alert: Motor C7', 'warn'],
+    ['New order received: 1,200 units', 'ok'],
+    ['Inventory reorder triggered: Component X9', 'ok'],
+    ['Temperature anomaly detected: Zone 4', 'err'],
+    ['Shift change: Team B → Team C', 'ok'],
+    ['OEE target exceeded: 89.2%', 'ok'],
+    ['Firmware update deployed: Sensor Array 12', 'ok'],
+    ['Logistics route optimized: -14% fuel', 'ok'],
+    ['Robot arm R7 recalibrated successfully', 'ok'],
+    ['Customer order #9182 shipped', 'ok'],
+    ['Raw material delivery confirmed', 'ok'],
+    ['Safety inspection passed: Area 6', 'ok'],
+    ['Defect rate below threshold: 0.09%', 'ok'],
+    ['Energy consumption anomaly flagged', 'warn'],
+    ['Digital twin sync complete', 'ok'],
+];
+let logCount = 0;
+const logFeed = document.getElementById('logFeed');
+
+function addLogEntry(msg, type) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const cls = type === 'ok' ? 'log-ok' : type === 'warn' ? 'log-warn' : 'log-err';
+    const icon = type === 'ok' ? '✓' : type === 'warn' ? '⚠' : '✕';
+    logFeed.innerHTML = `<div class="log-entry"><span class="log-time">${time}</span><span class="${cls}">${icon}</span><span class="log-msg">${msg}</span></div>` + logFeed.innerHTML;
+    logCount++;
+    document.getElementById('logCount').textContent = logCount + ' events';
+    if (logFeed.children.length > 30) logFeed.removeChild(logFeed.lastChild);
+}
+
+function autoLog() {
+    const [msg, type] = logMessages[Math.floor(Math.random() * logMessages.length)];
+    addLogEntry(msg, type);
+    setTimeout(autoLog, 3000 + Math.random() * 5000);
+}
+setTimeout(autoLog, 2000);
+
+// ====== GLOBAL FACILITIES ======
+const facilities = [
+    { flag: '🇩🇪', name: 'Munich', status: 'online', units: 2840 },
+    { flag: '🇺🇸', name: 'Detroit', status: 'online', units: 3120 },
+    { flag: '🇨🇳', name: 'Shenzhen', status: 'online', units: 4200 },
+    { flag: '🇯🇵', name: 'Osaka', status: 'delayed', units: 1890 },
+    { flag: '🇧🇷', name: 'São Paulo', status: 'online', units: 1560 },
+    { flag: '🇮🇳', name: 'Pune', status: 'online', units: 2100 },
+];
+const wsEl = document.getElementById('worldStrip');
+facilities.forEach(f => {
+    wsEl.innerHTML += `<div class="world-dot">
+        <div class="flag">${f.flag}</div>
+        <div class="wname">${f.name}</div>
+        <div class="wstatus ${f.status}">${f.status === 'online' ? '● Online' : '◐ Delayed'}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#27c0e7;font-weight:600;">${f.units}</div>
+        <div style="font-size:.58rem;color:#5d7da3;">units/day</div>
+    </div>`;
+});
+
+// Throughput timeline
+const tpEl = document.getElementById('throughputTimeline');
+const tpData = Array.from({length: 48}, () => 40 + Math.random() * 60);
+tpData.forEach((v, i) => {
+    const color = v > 80 ? '#2ecc71' : v > 55 ? '#27c0e7' : '#f39c12';
+    tpEl.innerHTML += `<div class="tbar" style="height:${v}%;background:${color};opacity:${0.4 + (i/48)*0.6}"></div>`;
+});
+
+// ====== TICKER ======
+const alerts = [
+    '🟢 <span>Munich Line 3:</span> Calibration complete — OEE at 91.2%',
+    '🟡 <span>Osaka:</span> Shipment delayed — ETA updated to 14:30 JST',
+    '🟢 <span>Shenzhen:</span> Record output — 4,200 units in 24h',
+    '🔵 <span>AI Insight:</span> Predictive model suggests motor C7 maintenance in 72h',
+    '🟢 <span>Detroit:</span> Quality audit passed — zero critical findings',
+    '🟡 <span>Supply Chain:</span> Lithium prices up 3.2% — hedging recommended',
+    '🟢 <span>Pune:</span> New assembly line commissioned — capacity +18%',
+    '🔵 <span>Digital Twin:</span> Simulation matched production within 0.3% variance',
+];
+document.getElementById('ticker').innerHTML = alerts.map(a => `<span class="alert">${a}</span>`).join('');
+</script>
+
+<script>
+document.querySelectorAll("a[href=\"index.html\"]").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    if (window.parent !== window && window.parent.switchTab) window.parent.switchTab("home");
+    else window.location.href = "../index.html";
+  });
+});
+</script>
+</body>
+</html>

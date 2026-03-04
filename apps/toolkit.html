@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PD Toolkit — Product Development Decision Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0b1628; color: #e4eaf4; min-height: 100vh; }
+
+        /* Header */
+        .header { text-align: center; padding: 2.5rem 1rem 1.5rem; }
+        .header h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; }
+        .header h1 span { color: #27c0e7; }
+        .header p { color: #7a92b5; margin-top: .4rem; font-size: 1.05rem; }
+        .back { position: absolute; top: 1.2rem; left: 1.2rem; color: #27c0e7; text-decoration: none; font-size: .9rem; }
+
+        /* Tabs */
+        .tabs { display: flex; justify-content: center; gap: .5rem; padding: 0 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .tab { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #8a9dba; padding: .6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: .92rem; font-weight: 600; transition: all .2s; }
+        .tab:hover { border-color: rgba(39,192,231,0.3); color: #c3d1e8; }
+        .tab.active { background: rgba(39,192,231,0.15); border-color: #27c0e7; color: #27c0e7; }
+
+        /* Panels */
+        .panel { display: none; max-width: 760px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+        .panel.active { display: block; }
+        .panel h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: .4rem; }
+        .panel h2 span { color: #27c0e7; }
+        .panel .desc { color: #7a92b5; font-size: .92rem; margin-bottom: 1.8rem; line-height: 1.55; }
+
+        /* Cards */
+        .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.2rem; }
+        .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: .8rem; color: #e4eaf4; }
+
+        /* Form elements */
+        label { display: block; font-size: .88rem; color: #8a9dba; margin-bottom: .3rem; font-weight: 500; }
+        select, input[type="number"], input[type="text"], textarea {
+            width: 100%; padding: .7rem .9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06); color: #e4eaf4; font-size: .95rem; margin-bottom: .9rem; outline: none;
+        }
+        select option { background: #132744; }
+        textarea { resize: vertical; min-height: 60px; }
+        input:focus, select:focus, textarea:focus { border-color: #27c0e7; }
+
+        /* Buttons */
+        .btn { background: linear-gradient(90deg, #27c0e7, #1e488f); color: #fff; border: none; padding: .75rem 1.6rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform .15s, box-shadow .2s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(39,192,231,0.25); }
+        .btn-sm { padding: .5rem 1rem; font-size: .88rem; }
+        .btn-danger { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+
+        /* Results */
+        .result-box { background: rgba(39,192,231,0.08); border: 1px solid rgba(39,192,231,0.2); border-radius: 10px; padding: 1.3rem; margin-top: 1.2rem; display: none; }
+        .result-box.show { display: block; }
+        .result-box h3 { color: #27c0e7; margin-bottom: .6rem; }
+
+        /* Gauge */
+        .gauge { display: flex; align-items: center; gap: 1rem; margin: .8rem 0; }
+        .gauge-bar { flex: 1; height: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+        .gauge-fill { height: 100%; border-radius: 6px; transition: width .6s ease; }
+        .gauge-label { font-size: 1.3rem; font-weight: 700; min-width: 55px; text-align: right; }
+
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* Stage gate */
+        .gate-row { display: flex; align-items: center; gap: .8rem; padding: .7rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .gate-row:last-child { border: none; }
+        .gate-check { width: 22px; height: 22px; accent-color: #27c0e7; cursor: pointer; }
+        .gate-label { flex: 1; font-size: .92rem; }
+        .gate-status { font-size: .8rem; font-weight: 600; padding: .2rem .6rem; border-radius: 4px; }
+        .gate-status.pass { background: rgba(46,204,113,0.15); color: #2ecc71; }
+        .gate-status.fail { background: rgba(231,76,60,0.15); color: #e74c3c; }
+
+        /* FMEA table */
+        .fmea-table { width: 100%; border-collapse: collapse; margin-top: .8rem; }
+        .fmea-table th { text-align: left; font-size: .78rem; color: #7a92b5; padding: .5rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-transform: uppercase; letter-spacing: .05em; }
+        .fmea-table td { padding: .5rem; font-size: .9rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .fmea-table input, .fmea-table select { margin-bottom: 0; }
+        .rpn-cell { font-weight: 700; font-size: 1.1rem; text-align: center; }
+        .rpn-low { color: #2ecc71; }
+        .rpn-med { color: #f39c12; }
+        .rpn-high { color: #e74c3c; }
+
+        /* Make vs buy */
+        .slider-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .slider-row label { min-width: 160px; margin: 0; }
+        .slider-row input[type="range"] { flex: 1; accent-color: #27c0e7; }
+        .slider-row .val { min-width: 30px; text-align: center; color: #27c0e7; font-weight: 700; }
+
+        /* Cycle time */
+        .timeline { display: flex; gap: 2px; margin: 1rem 0; border-radius: 8px; overflow: hidden; height: 36px; }
+        .timeline-seg { display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 600; color: #fff; min-width: 30px; transition: flex .4s; }
+
+        .footer { text-align: center; padding: 2rem 1rem; color: #4a6080; font-size: .82rem; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 1rem; }
+        .footer a { color: #27c0e7; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← All Projects</a>
+
+    <div class="header">
+        <h1>PD <span>Toolkit</span></h1>
+        <p>Interactive decision tools for Industrial Product Development Managers</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showPanel('gate')">Stage-Gate Checker</div>
+        <div class="tab" onclick="showPanel('fmea')">FMEA Calculator</div>
+        <div class="tab" onclick="showPanel('makebuy')">Make vs Buy</div>
+        <div class="tab" onclick="showPanel('cycle')">Cycle Time Estimator</div>
+    </div>
+
+    <!-- ==================== STAGE-GATE ==================== -->
+    <div class="panel active" id="panel-gate">
+        <h2>Stage-Gate <span>Readiness Checker</span></h2>
+        <p class="desc">Evaluate whether your project is ready to pass through each development gate. Check items as they're completed — the tool calculates your gate readiness score in real time.</p>
+
+        <div class="card">
+            <h3>Select Gate</h3>
+            <select id="gateSelect" onchange="renderGate()">
+                <option value="0">Gate 0 — Idea Screen</option>
+                <option value="1">Gate 1 — Scope & Business Case</option>
+                <option value="2" selected>Gate 2 — Design & Development Review</option>
+                <option value="3">Gate 3 — Testing & Validation</option>
+                <option value="4">Gate 4 — Launch Readiness</option>
+            </select>
+        </div>
+
+        <div class="card" id="gateChecklist"></div>
+
+        <div class="result-box show" id="gateResult">
+            <h3>Gate Readiness</h3>
+            <div class="gauge">
+                <div class="gauge-bar"><div class="gauge-fill" id="gateFill" style="width:0%;background:#e74c3c"></div></div>
+                <div class="gauge-label" id="gateScore">0%</div>
+            </div>
+            <p id="gateVerdict" style="margin-top:.6rem;font-size:.92rem;color:#8a9dba;"></p>
+        </div>
+    </div>
+
+    <!-- ==================== FMEA ==================== -->
+    <div class="panel" id="panel-fmea">
+        <h2>FMEA <span>Risk Calculator</span></h2>
+        <p class="desc">Quickly calculate Risk Priority Numbers (RPN) for potential failure modes. Severity × Occurrence × Detection = RPN. Prioritize design and process improvements where it matters most.</p>
+
+        <div class="card">
+            <table class="fmea-table">
+                <thead>
+                    <tr><th>Failure Mode</th><th style="width:70px">Severity</th><th style="width:70px">Occurrence</th><th style="width:70px">Detection</th><th style="width:60px">RPN</th><th style="width:36px"></th></tr>
+                </thead>
+                <tbody id="fmeaBody"></tbody>
+            </table>
+            <button class="btn btn-sm" onclick="addFmeaRow()" style="margin-top:.8rem;">+ Add Row</button>
+        </div>
+
+        <div class="result-box show" id="fmeaResult">
+            <h3>Risk Summary</h3>
+            <p id="fmeaSummary" style="font-size:.92rem;color:#c3d1e8;line-height:1.6;"></p>
+        </div>
+    </div>
+
+    <!-- ==================== MAKE VS BUY ==================== -->
+    <div class="panel" id="panel-makebuy">
+        <h2>Make vs <span>Buy</span> Decision Matrix</h2>
+        <p class="desc">Score key factors to get a data-driven recommendation on whether to manufacture in-house or outsource a component. Drag sliders to rate each criterion from 1 (favors Buy) to 10 (favors Make).</p>
+
+        <div class="card">
+            <div id="makebuySliders"></div>
+        </div>
+
+        <div class="result-box show" id="makebuyResult">
+            <h3>Recommendation</h3>
+            <div class="gauge">
+                <div style="font-size:.85rem;color:#e74c3c;font-weight:600;">BUY</div>
+                <div class="gauge-bar"><div class="gauge-fill" id="mbFill" style="width:50%;background:linear-gradient(90deg,#e74c3c,#f39c12,#2ecc71)"></div></div>
+                <div style="font-size:.85rem;color:#2ecc71;font-weight:600;">MAKE</div>
+            </div>
+            <p id="mbVerdict" style="margin-top:.8rem;font-size:.95rem;font-weight:600;text-align:center;"></p>
+            <p id="mbDetail" style="margin-top:.3rem;font-size:.85rem;color:#7a92b5;text-align:center;"></p>
+        </div>
+    </div>
+
+    <!-- ==================== CYCLE TIME ==================== -->
+    <div class="panel" id="panel-cycle">
+        <h2>Development <span>Cycle Time</span> Estimator</h2>
+        <p class="desc">Estimate your total product development timeline by entering weeks for each phase. See a visual breakdown and identify bottlenecks instantly.</p>
+
+        <div class="card">
+            <div class="grid-2" id="cycleInputs"></div>
+            <button class="btn" onclick="calcCycle()" style="margin-top:.5rem;">Calculate Timeline</button>
+        </div>
+
+        <div class="result-box" id="cycleResult">
+            <h3>Timeline Visualization</h3>
+            <div class="timeline" id="cycleTimeline"></div>
+            <p id="cycleSummary" style="margin-top:1rem;font-size:.92rem;color:#c3d1e8;line-height:1.6;"></p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 Sinkrest Lab · <a href="index.html">All Projects</a> · <a href="https://github.com/sinkrest/lab">GitHub</a></p>
+    </div>
+
+<script>
+// ========== TABS ==========
+function showPanel(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// ========== STAGE-GATE ==========
+const gateData = {
+    0: ['Market need identified','Problem statement defined','Initial idea documented','Strategic alignment confirmed','Preliminary IP search done','Sponsor assigned'],
+    1: ['Voice of Customer (VOC) gathered','Competitive analysis complete','Business case with ROI','Preliminary technical feasibility','Resource plan outlined','Risk assessment (high-level)','Project charter approved','Target cost defined'],
+    2: ['Detailed design specifications','CAD models / drawings complete','Design FMEA completed','Bill of Materials (BOM) finalized','Supplier quotes received','DFM/DFA review done','Prototype plan approved','Regulatory requirements mapped','Test plan documented','Design review sign-off'],
+    3: ['Prototype built & functional','DVT (Design Verification Testing) passed','PVT (Production Validation) passed','Reliability testing complete','Regulatory / compliance submissions','Manufacturing process validated','Quality control plan finalized','Packaging & labeling approved','Service / support documentation','Field trial feedback incorporated'],
+    4: ['Production tooling ready','Supply chain contracts signed','Launch marketing materials','Sales training completed','Distribution & logistics confirmed','ERP / PLM system updated','Customer support trained','Post-launch KPIs defined','Executive launch approval','Go / No-Go decision documented']
+};
+
+function renderGate() {
+    const g = document.getElementById('gateSelect').value;
+    const items = gateData[g];
+    let html = '<h3>Checklist</h3>';
+    items.forEach((item, i) => {
+        html += `<div class="gate-row">
+            <input type="checkbox" class="gate-check" id="gc${i}" onchange="calcGate()">
+            <label class="gate-label" for="gc${i}">${item}</label>
+            <span class="gate-status fail" id="gs${i}">Pending</span>
+        </div>`;
+    });
+    document.getElementById('gateChecklist').innerHTML = html;
+    calcGate();
+}
+
+function calcGate() {
+    const checks = document.querySelectorAll('.gate-check');
+    let total = checks.length, done = 0;
+    checks.forEach((c, i) => {
+        const s = document.getElementById('gs' + i);
+        if (c.checked) { done++; s.textContent = 'Done'; s.className = 'gate-status pass'; }
+        else { s.textContent = 'Pending'; s.className = 'gate-status fail'; }
+    });
+    const pct = total ? Math.round(done / total * 100) : 0;
+    const fill = document.getElementById('gateFill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
+    document.getElementById('gateScore').textContent = pct + '%';
+    const v = document.getElementById('gateVerdict');
+    if (pct === 100) v.textContent = '✅ All criteria met — ready to pass this gate.';
+    else if (pct >= 80) v.textContent = '⚠️ Nearly there. Review remaining items before gate review.';
+    else if (pct >= 50) v.textContent = '🔶 Significant gaps remain. Address critical items first.';
+    else v.textContent = '🔴 Not ready. Major work needed before gate review.';
+}
+renderGate();
+
+// ========== FMEA ==========
+let fmeaRows = [];
+function addFmeaRow(mode, sev, occ, det) {
+    fmeaRows.push({ mode: mode || '', sev: sev || 5, occ: occ || 5, det: det || 5 });
+    renderFmea();
+}
+function removeFmeaRow(i) { fmeaRows.splice(i, 1); renderFmea(); }
+
+function renderFmea() {
+    let html = '';
+    fmeaRows.forEach((r, i) => {
+        const rpn = r.sev * r.occ * r.det;
+        const cls = rpn >= 200 ? 'rpn-high' : rpn >= 100 ? 'rpn-med' : 'rpn-low';
+        html += `<tr>
+            <td><input type="text" value="${r.mode}" placeholder="e.g. Seal failure" onchange="fmeaRows[${i}].mode=this.value" style="margin:0"></td>
+            <td><select onchange="fmeaRows[${i}].sev=+this.value;renderFmea()" style="margin:0">${opts(r.sev)}</select></td>
+            <td><select onchange="fmeaRows[${i}].occ=+this.value;renderFmea()" style="margin:0">${opts(r.occ)}</select></td>
+            <td><select onchange="fmeaRows[${i}].det=+this.value;renderFmea()" style="margin:0">${opts(r.det)}</select></td>
+            <td class="rpn-cell ${cls}">${rpn}</td>
+            <td><span style="cursor:pointer;color:#e74c3c" onclick="removeFmeaRow(${i})">✕</span></td>
+        </tr>`;
+    });
+    document.getElementById('fmeaBody').innerHTML = html;
+    // Summary
+    if (fmeaRows.length === 0) { document.getElementById('fmeaSummary').textContent = 'Add failure modes above to see risk analysis.'; return; }
+    const rpns = fmeaRows.map(r => r.sev * r.occ * r.det);
+    const max = Math.max(...rpns);
+    const avg = Math.round(rpns.reduce((a, b) => a + b, 0) / rpns.length);
+    const critical = rpns.filter(r => r >= 200).length;
+    const worst = fmeaRows[rpns.indexOf(max)];
+    document.getElementById('fmeaSummary').innerHTML =
+        `<strong>${fmeaRows.length}</strong> failure modes analyzed · Avg RPN: <strong>${avg}</strong> · Highest: <strong>${max}</strong>${worst.mode ? ' (' + worst.mode + ')' : ''}<br>` +
+        (critical > 0 ? `⚠️ <strong>${critical}</strong> critical items (RPN ≥ 200) requiring immediate action.` : '✅ No critical risk items detected.');
+}
+function opts(sel) { let h=''; for(let i=1;i<=10;i++) h+=`<option value="${i}"${i===sel?' selected':''}>${i}</option>`; return h; }
+addFmeaRow('Seal degradation', 8, 4, 6);
+addFmeaRow('PCB solder joint crack', 7, 3, 5);
+addFmeaRow('Motor overheating', 9, 2, 7);
+
+// ========== MAKE VS BUY ==========
+const mbFactors = [
+    { name: 'Core competency alignment', desc: '10 = core to our business' },
+    { name: 'Cost advantage (in-house)', desc: '10 = much cheaper in-house' },
+    { name: 'Quality control capability', desc: '10 = we can ensure higher quality' },
+    { name: 'Available capacity & equipment', desc: '10 = fully equipped' },
+    { name: 'IP / trade secret protection', desc: '10 = critical to protect' },
+    { name: 'Supply chain risk (external)', desc: '10 = high risk if outsourced' },
+    { name: 'Speed to market', desc: '10 = faster in-house' },
+    { name: 'Scalability needs', desc: '10 = easier to scale in-house' },
+];
+
+function renderMB() {
+    let html = '';
+    mbFactors.forEach((f, i) => {
+        html += `<div class="slider-row">
+            <label>${f.name}<br><span style="font-size:.75rem;color:#5d7da3">${f.desc}</span></label>
+            <input type="range" min="1" max="10" value="5" id="mb${i}" oninput="document.getElementById('mbv${i}').textContent=this.value;calcMB()">
+            <div class="val" id="mbv${i}">5</div>
+        </div>`;
+    });
+    document.getElementById('makebuySliders').innerHTML = html;
+    calcMB();
+}
+
+function calcMB() {
+    let sum = 0;
+    mbFactors.forEach((_, i) => sum += +document.getElementById('mb' + i).value);
+    const pct = Math.round((sum / (mbFactors.length * 10)) * 100);
+    document.getElementById('mbFill').style.width = pct + '%';
+    const v = document.getElementById('mbVerdict');
+    const d = document.getElementById('mbDetail');
+    if (pct >= 70) { v.textContent = '🏭 MAKE — Strong case for in-house manufacturing'; v.style.color = '#2ecc71'; d.textContent = `Score: ${pct}% — Multiple factors favor keeping this in-house.`; }
+    else if (pct >= 45) { v.textContent = '🤔 HYBRID — Consider partial outsourcing'; v.style.color = '#f39c12'; d.textContent = `Score: ${pct}% — Mixed signals. Explore co-manufacturing or phased approach.`; }
+    else { v.textContent = '📦 BUY — Outsourcing is likely optimal'; v.style.color = '#e74c3c'; d.textContent = `Score: ${pct}% — Few factors support in-house. Focus resources on core competencies.`; }
+}
+renderMB();
+
+// ========== CYCLE TIME ==========
+const phases = [
+    { name: 'Concept', color: '#3498db', weeks: 4 },
+    { name: 'Feasibility', color: '#9b59b6', weeks: 6 },
+    { name: 'Design', color: '#27c0e7', weeks: 10 },
+    { name: 'Prototyping', color: '#2ecc71', weeks: 8 },
+    { name: 'Testing & Validation', color: '#f39c12', weeks: 12 },
+    { name: 'Tooling & Pre-production', color: '#e67e22', weeks: 10 },
+    { name: 'Production Ramp', color: '#e74c3c', weeks: 6 },
+    { name: 'Launch', color: '#1abc9c', weeks: 3 },
+];
+
+function renderCycleInputs() {
+    let html = '';
+    phases.forEach((p, i) => {
+        html += `<div>
+            <label>${p.name}</label>
+            <input type="number" id="cyc${i}" value="${p.weeks}" min="0" max="104" placeholder="weeks">
+        </div>`;
+    });
+    document.getElementById('cycleInputs').innerHTML = html;
+}
+renderCycleInputs();
+
+function calcCycle() {
+    const vals = phases.map((p, i) => ({ ...p, weeks: +document.getElementById('cyc' + i).value || 0 }));
+    const total = vals.reduce((s, v) => s + v.weeks, 0);
+    if (total === 0) return;
+
+    let html = '';
+    vals.forEach(v => {
+        if (v.weeks === 0) return;
+        const pct = (v.weeks / total * 100);
+        html += `<div class="timeline-seg" style="flex:${v.weeks};background:${v.color}" title="${v.name}: ${v.weeks}w">${v.weeks > 3 ? v.name.split(' ')[0] : ''}</div>`;
+    });
+    document.getElementById('cycleTimeline').innerHTML = html;
+
+    const longest = vals.reduce((a, b) => a.weeks > b.weeks ? a : b);
+    const months = (total / 4.33).toFixed(1);
+    document.getElementById('cycleSummary').innerHTML =
+        `<strong>Total: ${total} weeks (~${months} months)</strong><br>` +
+        `Longest phase: <strong>${longest.name}</strong> (${longest.weeks} weeks — ${Math.round(longest.weeks/total*100)}% of timeline)<br>` +
+        `💡 Tip: If ${longest.name} exceeds 30% of total, consider parallel workstreams or phased deliverables.`;
+
+    document.getElementById('cycleResult').classList.add('show');
+}
+</script>
+<script>
+document.querySelectorAll("a[href=\"index.html\"]").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    if (window.parent !== window && window.parent.switchTab) window.parent.switchTab("home");
+    else window.location.href = "../index.html";
+  });
+});
+</script>
+</body>
+</html>

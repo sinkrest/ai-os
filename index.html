@@ -243,6 +243,53 @@
 
     .footer a { color: #27c0e7; text-decoration: none; }
 
+    /* ── App viewer ────────────────────────────────────────── */
+    #panel-app {
+      overflow: hidden;
+    }
+
+    .app-bar {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .5rem 1rem;
+      background: rgba(11,22,40,0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .app-bar-back {
+      padding: .28rem .8rem;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: none;
+      color: #8a9dba;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color .18s, border-color .18s, background .18s;
+    }
+
+    .app-bar-back:hover {
+      color: #27c0e7;
+      border-color: rgba(39,192,231,0.3);
+      background: rgba(39,192,231,0.08);
+    }
+
+    .app-bar-title {
+      font-size: .82rem;
+      font-weight: 600;
+      color: #94a7c8;
+    }
+
+    #app-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      display: block;
+    }
+
     /* ── Snake ─────────────────────────────────────────────── */
     #panel-snake {
       align-items: center;
@@ -303,59 +350,68 @@
         <span class="tag">Game</span>
       </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/command-center.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/command-center.html', '⚡ Industrial Command Center')">
         <div class="icon">⚡</div>
         <h2>Industrial Command Center</h2>
         <p>Live supply chain network, KPI gauges, what-if simulator, risk heat map, global production monitoring.</p>
         <span class="tag">✦ Flagship</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/dashboard.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/dashboard.html', '📊 AI Usage Dashboard')">
         <div class="icon">📊</div>
         <h2>AI Usage Dashboard</h2>
         <p>Track token consumption, model usage, and execution history at a glance. Stay on top of your AI spend.</p>
         <span class="tag">New</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/toolkit.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/toolkit.html', '🛠️ PD Toolkit')">
         <div class="icon">🛠️</div>
         <h2>PD Toolkit</h2>
         <p>Interactive decision tools — Stage-Gate Checker, FMEA Calculator, Make vs Buy Matrix, Cycle Time Estimator.</p>
         <span class="tag">Most Popular</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/snake.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/snake.html', '🏭 Product Pipeline')">
         <div class="icon">🏭</div>
         <h2>Product Pipeline</h2>
         <p>Navigate your product through development stages — collect milestones, dodge scope creep, launch before budget runs out!</p>
         <span class="tag">PD Strategy Game</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/dog.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/dog.html', '🦴 Royal Dog Portrait Generator')">
         <div class="icon">🦴</div>
         <h2>Royal Dog Portrait Generator</h2>
         <p>Turn your dog's photo into a royal masterpiece — AI style, fun, and ready for download.</p>
         <span class="tag">Dog Fun</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/shop.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/shop.html', '🐴 Gallop & Co. Shop')">
         <div class="icon">🐴</div>
         <h2>Gallop & Co. Shop</h2>
         <p>Premium handcrafted stickhorse webshop with cart, product gallery, reviews, and checkout.</p>
         <span class="tag">Webshop</span>
-      </a>
+      </div>
 
-      <a class="card" href="https://sinkrest.github.io/lab/newsletter.html" target="_blank" rel="noopener">
+      <div class="card" onclick="openApp('apps/newsletter.html', '📬 The Industrial Edge')">
         <div class="icon">📬</div>
         <h2>The Industrial Edge</h2>
         <p>Newsletter for Industrial Product Development Managers — AI, smart manufacturing & product strategy insights.</p>
         <span class="tag">Newsletter</span>
-      </a>
+      </div>
     </div>
 
     <footer class="footer">
       Built with Claude Code &nbsp;·&nbsp; <a href="https://github.com/sinkrest/ai-os">GitHub</a>
     </footer>
+  </div>
+
+  <!-- App viewer -->
+  <div id="panel-app" class="tab-panel">
+    <div class="app-bar">
+      <button class="app-bar-back" onclick="switchTab('home')">← Home</button>
+      <span class="app-bar-title" id="app-bar-title"></span>
+    </div>
+    <iframe id="app-frame" src="" title="App"></iframe>
   </div>
 
   <!-- Snake -->
@@ -374,7 +430,14 @@
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
-    document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+    const btn = document.querySelector('[data-tab="' + name + '"]');
+    if (btn) btn.classList.add('active');
+  }
+
+  function openApp(src, title) {
+    document.getElementById('app-frame').src = src;
+    document.getElementById('app-bar-title').textContent = title;
+    switchTab('app');
   }
 
   document.querySelectorAll('.nav-tab').forEach(btn => {
