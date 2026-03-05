@@ -11,7 +11,9 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: #0b1628;
+      background-color: #0b1628;
+      background-image: radial-gradient(rgba(39,192,231,0.13) 1px, transparent 1px);
+      background-size: 24px 24px;
       color: #e4eaf4;
       height: 100dvh;
       display: flex;
@@ -101,7 +103,10 @@
 
     /* ── Home ──────────────────────────────────────────────── */
     .hero {
-      background: linear-gradient(135deg, #0b1628 0%, #132744 40%, #1a3a6b 70%, #1e488f 100%);
+      background:
+        radial-gradient(rgba(39,192,231,0.1) 1px, transparent 1px),
+        linear-gradient(135deg, #0b1628 0%, #132744 40%, #1a3a6b 70%, #1e488f 100%);
+      background-size: 24px 24px, 100% 100%;
       padding: 3.5rem 1.5rem 2.5rem;
       text-align: center;
       position: relative;
