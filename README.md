@@ -2,7 +2,7 @@
 
 A browser-based personal operating system — a collection of AI-built tools, interactive apps, and experiments, all running inside a single tabbed interface.
 
-**Built with** [Claude Code](https://claude.ai/code)
+**Live:** [sinkrest.github.io/roman-os](https://sinkrest.github.io/roman-os) &nbsp;·&nbsp; Built with [Claude Code](https://claude.ai/code)
 
 ---
 
