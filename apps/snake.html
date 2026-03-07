@@ -7,12 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #0b1628; color: #e4eaf4; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: #080810; color: #e4eaf4; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-        .back { position: absolute; top: 1.2rem; left: 1.2rem; color: #27c0e7; text-decoration: none; font-size: .9rem; z-index: 10; }
+        .back { position: absolute; top: 1.2rem; left: 1.2rem; color: #6366f1; text-decoration: none; font-size: .9rem; z-index: 10; }
 
         .header {
-            background: linear-gradient(135deg, #0b1628 0%, #132744 50%, #1a3a6b 100%);
+            background: linear-gradient(135deg, #080810 0%, #0f0f1a 50%, #1a1a2e 100%);
             width: 100%;
             text-align: center;
             padding: 2.2rem 1rem 1.5rem;
@@ -26,14 +26,14 @@
             right: -10%;
             width: 350px;
             height: 350px;
-            background: radial-gradient(circle, rgba(39,192,231,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
             border-radius: 50%;
         }
         .badge {
             display: inline-block;
-            background: rgba(39,192,231,0.15);
-            border: 1px solid rgba(39,192,231,0.3);
-            color: #27c0e7;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: #6366f1;
             font-size: .75rem;
             font-weight: 600;
             letter-spacing: .08em;
@@ -43,7 +43,7 @@
             margin-bottom: .7rem;
         }
         h1 { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: .2rem; }
-        h1 span { color: #27c0e7; }
+        h1 span { color: #6366f1; }
         .header .tagline { color: #7a92b5; font-size: .88rem; margin-top: .3rem; }
 
         /* Dashboard */
@@ -66,7 +66,7 @@
             min-width: 90px;
         }
         .dash-card .label { font-size: .65rem; color: #5d7da3; text-transform: uppercase; letter-spacing: .06em; }
-        .dash-card .value { font-size: 1.2rem; font-weight: 800; color: #27c0e7; }
+        .dash-card .value { font-size: 1.2rem; font-weight: 800; color: #6366f1; }
         .dash-card .value.green { color: #2ecc71; }
         .dash-card .value.amber { color: #f39c12; }
         .dash-card .value.red { color: #e74c3c; }
@@ -94,7 +94,7 @@
             font-weight: 600;
             color: #94a7c8;
         }
-        .stage-label strong { color: #27c0e7; }
+        .stage-label strong { color: #6366f1; }
 
         .game-area {
             position: relative;
@@ -102,26 +102,26 @@
             margin: .8rem 0;
         }
         canvas {
-            border: 2px solid rgba(39,192,231,0.3);
+            border: 2px solid rgba(99,102,241,0.3);
             border-radius: 12px;
             background: #0d1f35;
             display: block;
-            box-shadow: 0 4px 30px rgba(39,192,231,0.08);
+            box-shadow: 0 4px 30px rgba(99,102,241,0.08);
         }
 
         .controls { margin-top: 1rem; display: grid; grid-template-areas: ". up ." "left down right"; gap: .5rem; }
         .controls button {
             width: 56px; height: 56px; font-size: 1.4rem;
-            border: 1px solid rgba(39,192,231,0.25);
+            border: 1px solid rgba(99,102,241,0.25);
             background: rgba(255,255,255,0.05);
-            color: #27c0e7;
+            color: #6366f1;
             border-radius: 12px;
             cursor: pointer;
             transition: background .15s, transform .1s;
             backdrop-filter: blur(4px);
         }
-        .controls button:hover { background: rgba(39,192,231,0.15); }
-        .controls button:active { transform: scale(0.92); background: rgba(39,192,231,0.25); }
+        .controls button:hover { background: rgba(99,102,241,0.15); }
+        .controls button:active { transform: scale(0.92); background: rgba(99,102,241,0.25); }
         .btn-up { grid-area: up; }
         .btn-down { grid-area: down; }
         .btn-left { grid-area: left; }
@@ -148,10 +148,10 @@
         }
         .log-entries .entry { border-bottom: 1px solid rgba(255,255,255,0.03); padding: .2rem 0; }
         .log-entries .entry:last-child { border: none; }
-        .log-entries .entry span { color: #27c0e7; font-weight: 600; }
+        .log-entries .entry span { color: #6366f1; font-weight: 600; }
 
         .info { margin-top: .8rem; color: #4a6080; font-size: .82rem; text-align: center; padding-bottom: 2rem; }
-        .info a { color: #27c0e7; text-decoration: none; }
+        .info a { color: #6366f1; text-decoration: none; }
 
         .overlay {
             position: absolute;
@@ -170,12 +170,12 @@
         .overlay p { color: #94a7c8; font-size: .95rem; line-height: 1.5; max-width: 320px; }
         .overlay .stats-row { display: flex; gap: 1.5rem; margin: 1rem 0; }
         .overlay .mini-stat { text-align: center; }
-        .overlay .mini-stat .num { font-size: 1.3rem; font-weight: 800; color: #27c0e7; }
+        .overlay .mini-stat .num { font-size: 1.3rem; font-weight: 800; color: #6366f1; }
         .overlay .mini-stat .lbl { font-size: .7rem; color: #5d7da3; text-transform: uppercase; }
         .overlay button {
             margin-top: .8rem;
             padding: .75rem 2rem;
-            background: linear-gradient(90deg, #27c0e7, #1e488f);
+            background: linear-gradient(90deg, #6366f1, #312e81);
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -187,7 +187,7 @@
         }
         .overlay button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(39,192,231,0.3);
+            box-shadow: 0 6px 24px rgba(99,102,241,0.3);
         }
         .overlay .hint { font-size: .78rem; color: #4a6080; margin-top: .6rem; }
 
@@ -205,7 +205,7 @@
             100% { opacity: 0; transform: translateY(-40px); }
         }
     </style>
-<style>.back{display:none!important}</style><style>body{background-image:radial-gradient(rgba(39,192,231,0.13) 1px,transparent 1px)!important;background-size:24px 24px!important}</style></head>
+<style>.back{display:none!important}</style><style>body{background-image:radial-gradient(rgba(99,102,241,0.13) 1px,transparent 1px)!important;background-size:24px 24px!important}</style></head>
 <body>
     <a href="index.html" class="back">← All Projects</a>
 
@@ -261,7 +261,7 @@
         const stages = [
             { name: 'Concept',      color: '#3498db', icon: '💡', milestones: ['Idea validated','VOC gathered','Business case drafted'] },
             { name: 'Feasibility',   color: '#9b59b6', icon: '🔍', milestones: ['Tech feasibility confirmed','Risk assessment done','Budget approved'] },
-            { name: 'Design',        color: '#27c0e7', icon: '📐', milestones: ['CAD complete','DFMEA done','BOM finalized'] },
+            { name: 'Design',        color: '#6366f1', icon: '📐', milestones: ['CAD complete','DFMEA done','BOM finalized'] },
             { name: 'Prototype',     color: '#2ecc71', icon: '🔧', milestones: ['Prototype built','DVT passed','Supplier qualified'] },
             { name: 'Validation',    color: '#f39c12', icon: '✅', milestones: ['PVT passed','Regulatory submitted','Quality plan set'] },
             { name: 'Launch',        color: '#e74c3c', icon: '🚀', milestones: ['Tooling ready','Production ramped','Product launched!'] },
@@ -403,7 +403,7 @@
             ctx.fillStyle = '#0d1f35'; ctx.fillRect(0,0,canvas.width,canvas.height);
 
             // Subtle grid
-            ctx.fillStyle = 'rgba(39,192,231,0.03)';
+            ctx.fillStyle = 'rgba(99,102,241,0.03)';
             for(let i=0;i<COLS;i++) for(let j=0;j<ROWS;j++) {
                 ctx.beginPath(); ctx.arc(i*SIZE+SIZE/2, j*SIZE+SIZE/2, 1, 0, Math.PI*2); ctx.fill();
             }
@@ -446,8 +446,8 @@
                 const segStage = Math.min(Math.floor(i / 3), stages.length - 1);
                 const alpha = Math.max(0.25, 1 - i * 0.025);
                 if(i === 0) {
-                    ctx.fillStyle = '#27c0e7';
-                    ctx.shadowColor = '#27c0e7';
+                    ctx.fillStyle = '#6366f1';
+                    ctx.shadowColor = '#6366f1';
                     ctx.shadowBlur = 14;
                 } else {
                     ctx.fillStyle = stages[Math.min(currentStage, stages.length-1)].color + Math.round(alpha*255).toString(16).padStart(2,'0');

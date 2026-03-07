@@ -9,7 +9,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: #060d1a; color: #e4eaf4; min-height: 100vh; overflow-x: hidden; }
 
-        .back { position: fixed; top: .8rem; left: .8rem; color: #27c0e7; text-decoration: none; font-size: .82rem; z-index: 100; opacity: .7; transition: opacity .2s; }
+        .back { position: fixed; top: .8rem; left: .8rem; color: #6366f1; text-decoration: none; font-size: .82rem; z-index: 100; opacity: .7; transition: opacity .2s; }
         .back:hover { opacity: 1; }
 
         /* Top bar */
@@ -19,18 +19,18 @@
             justify-content: space-between;
             padding: .6rem 1.2rem;
             background: rgba(6,13,26,0.95);
-            border-bottom: 1px solid rgba(39,192,231,0.15);
+            border-bottom: 1px solid rgba(99,102,241,0.15);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 50;
         }
         .topbar .logo { font-weight: 800; font-size: .95rem; color: #fff; }
-        .topbar .logo span { color: #27c0e7; }
+        .topbar .logo span { color: #6366f1; }
         .topbar .status { display: flex; align-items: center; gap: 1.2rem; }
         .topbar .dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); } 50% { box-shadow: 0 0 0 6px rgba(46,204,113,0); } }
-        .topbar .clock { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: #27c0e7; }
+        .topbar .clock { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: #6366f1; }
         .topbar .sys { font-size: .72rem; color: #5d7da3; }
 
         /* Main grid */
@@ -48,7 +48,7 @@
         /* Panels */
         .panel {
             background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(39,192,231,0.1);
+            border: 1px solid rgba(99,102,241,0.1);
             border-radius: 10px;
             overflow: hidden;
             position: relative;
@@ -58,7 +58,7 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(39,192,231,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
         }
         .panel-header {
             display: flex;
@@ -127,10 +127,10 @@
         .scenario-controls { display: flex; flex-direction: column; gap: .6rem; }
         .sc-row { display: flex; align-items: center; gap: .6rem; }
         .sc-row label { font-size: .78rem; color: #8a9dba; min-width: 90px; }
-        .sc-row input[type="range"] { flex: 1; accent-color: #27c0e7; }
-        .sc-row .sc-val { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: #27c0e7; min-width: 36px; text-align: right; font-weight: 600; }
+        .sc-row input[type="range"] { flex: 1; accent-color: #6366f1; }
+        .sc-row .sc-val { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: #6366f1; min-width: 36px; text-align: right; font-weight: 600; }
         .sc-btn {
-            background: linear-gradient(90deg, #27c0e7, #1e488f);
+            background: linear-gradient(90deg, #6366f1, #312e81);
             color: #fff;
             border: none;
             padding: .55rem 1.2rem;
@@ -142,7 +142,7 @@
             transition: transform .15s, box-shadow .2s;
             margin-top: .3rem;
         }
-        .sc-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(39,192,231,0.25); }
+        .sc-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.25); }
 
         /* Risk matrix */
         .risk-matrix {
@@ -188,12 +188,12 @@
         .throughput-gauge { text-align: center; }
         .throughput-gauge canvas { display: block; margin: 0 auto; }
         .throughput-gauge .tg-label { font-size: .7rem; color: #5d7da3; margin-top: .3rem; text-transform: uppercase; }
-        .throughput-gauge .tg-val { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: #27c0e7; }
+        .throughput-gauge .tg-val { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: #6366f1; }
 
         /* Alert ticker */
         .ticker {
-            background: rgba(39,192,231,0.05);
-            border-top: 1px solid rgba(39,192,231,0.1);
+            background: rgba(99,102,241,0.05);
+            border-top: 1px solid rgba(99,102,241,0.1);
             padding: .4rem 1rem;
             font-size: .72rem;
             color: #7a92b5;
@@ -208,7 +208,7 @@
         .ticker .alert { margin-right: 3rem; }
         .ticker .alert span { font-weight: 600; }
     </style>
-<style>.back,.topbar{display:none!important}</style><style>body{background-image:radial-gradient(rgba(39,192,231,0.13) 1px,transparent 1px)!important;background-size:24px 24px!important}</style></head>
+<style>.back,.topbar{display:none!important}</style><style>body{background-image:radial-gradient(rgba(99,102,241,0.13) 1px,transparent 1px)!important;background-size:24px 24px!important}</style></head>
 <body>
 
 <a href="index.html" class="back">← Hub</a>
@@ -305,10 +305,10 @@ updateClock();
 // ====== KPIs ======
 const kpis = [
     { label: 'OEE', value: '87.3%', delta: '+2.1%', dir: 'up', color: '#2ecc71' },
-    { label: 'Yield Rate', value: '96.1%', delta: '+0.4%', dir: 'up', color: '#27c0e7' },
+    { label: 'Yield Rate', value: '96.1%', delta: '+0.4%', dir: 'up', color: '#6366f1' },
     { label: 'Cycle Time', value: '34.2s', delta: '-1.8s', dir: 'up', color: '#2ecc71' },
     { label: 'Defect Rate', value: '0.12%', delta: '-0.03%', dir: 'up', color: '#2ecc71' },
-    { label: 'Inventory Turn', value: '12.4x', delta: '+0.8x', dir: 'up', color: '#27c0e7' },
+    { label: 'Inventory Turn', value: '12.4x', delta: '+0.8x', dir: 'up', color: '#6366f1' },
     { label: 'Lead Time', value: '18.5d', delta: '+1.2d', dir: 'down', color: '#f39c12' },
     { label: 'MTBF', value: '842h', delta: '+26h', dir: 'up', color: '#2ecc71' },
     { label: 'Cost/Unit', value: '$4.21', delta: '-$0.14', dir: 'up', color: '#2ecc71' },
@@ -331,7 +331,7 @@ const nodeTypes = [
     { name: 'Supplier A', icon: '🏗️', x: .2, y: .15, color: '#f39c12', size: 18 },
     { name: 'Supplier B', icon: '🏗️', x: .2, y: .5, color: '#f39c12', size: 18 },
     { name: 'Logistics Hub', icon: '🚛', x: .38, y: .32, color: '#9b59b6', size: 20 },
-    { name: 'Factory Floor', icon: '🏭', x: .55, y: .25, color: '#27c0e7', size: 26 },
+    { name: 'Factory Floor', icon: '🏭', x: .55, y: .25, color: '#6366f1', size: 26 },
     { name: 'Quality Lab', icon: '🔬', x: .55, y: .55, color: '#2ecc71', size: 18 },
     { name: 'Assembly', icon: '⚙️', x: .7, y: .35, color: '#3498db', size: 22 },
     { name: 'Warehouse', icon: '📦', x: .82, y: .2, color: '#1abc9c', size: 18 },
@@ -377,7 +377,7 @@ function drawNetwork() {
         nctx.beginPath();
         nctx.moveTo(from.px, from.py);
         nctx.lineTo(to.px, to.py);
-        nctx.strokeStyle = 'rgba(39,192,231,0.12)';
+        nctx.strokeStyle = 'rgba(99,102,241,0.12)';
         nctx.lineWidth = 1.5;
         nctx.stroke();
     });
@@ -472,8 +472,8 @@ function runScenario() {
     document.getElementById('scenarioResult').innerHTML =
         `<div style="border-left:3px solid ${color};padding-left:.6rem;">
         <strong>Simulation Result:</strong><br>
-        OEE: <span style="color:#27c0e7;font-weight:700">${efficiency}%</span> · 
-        Throughput: <span style="color:#27c0e7;font-weight:700">${throughput}</span> units/day<br>
+        OEE: <span style="color:#6366f1;font-weight:700">${efficiency}%</span> · 
+        Throughput: <span style="color:#6366f1;font-weight:700">${throughput}</span> units/day<br>
         Cost Impact: <span style="color:${costImpact > 0 ? '#e74c3c' : '#2ecc71'};font-weight:700">${costImpact > 0 ? '+' : ''}${costImpact}%</span> · 
         Risk: <span style="color:${color};font-weight:700">${riskScore}/10</span>
         </div>`;
@@ -564,7 +564,7 @@ facilities.forEach(f => {
         <div class="flag">${f.flag}</div>
         <div class="wname">${f.name}</div>
         <div class="wstatus ${f.status}">${f.status === 'online' ? '● Online' : '◐ Delayed'}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#27c0e7;font-weight:600;">${f.units}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#6366f1;font-weight:600;">${f.units}</div>
         <div style="font-size:.58rem;color:#5d7da3;">units/day</div>
     </div>`;
 });
@@ -573,7 +573,7 @@ facilities.forEach(f => {
 const tpEl = document.getElementById('throughputTimeline');
 const tpData = Array.from({length: 48}, () => 40 + Math.random() * 60);
 tpData.forEach((v, i) => {
-    const color = v > 80 ? '#2ecc71' : v > 55 ? '#27c0e7' : '#f39c12';
+    const color = v > 80 ? '#2ecc71' : v > 55 ? '#6366f1' : '#f39c12';
     tpEl.innerHTML += `<div class="tbar" style="height:${v}%;background:${color};opacity:${0.4 + (i/48)*0.6}"></div>`;
 });
 
