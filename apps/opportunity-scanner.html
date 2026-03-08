@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Opportunity Scanner</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a0a;
+      --bg-card:     #111111;
+      --bg-card-alt: #161616;
+      --border:      #1e1e1e;
+      --border-mid:  #2a2a2a;
+      --text:        #e8e8e8;
+      --text-muted:  #666;
+      --text-dim:    #444;
+      --accent:      #5b8def;
+      --accent-glow: rgba(91,141,239,0.15);
+      --accent-dark: #3b6dcf;
+      --green:       #3ecf8e;
+      --green-dim:   rgba(62,207,142,0.12);
+      --amber:       #f5a623;
+      --amber-dim:   rgba(245,166,35,0.12);
+      --purple:      #9b7fe8;
+      --purple-dim:  rgba(155,127,232,0.12);
+      --radius:      10px;
+      --radius-sm:   6px;
+      --font-sans:   -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --font-mono:   ui-monospace, monospace;
+    }
+
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 28px 24px 64px;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Hero */
+    .hero-title {
+      font-size: clamp(20px, 3.5vw, 28px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .hero-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { display: flex; flex-direction: column; }
+    .form-field.full { grid-column: 1 / -1; }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .field-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 7px; line-height: 1.5; }
+
+    .textarea, .select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 8px 11px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .textarea { resize: vertical; line-height: 1.6; }
+    .textarea:focus, .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      cursor: pointer;
+    }
+    .select option { background: var(--bg-card); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; border: none; font-family: var(--font-sans); white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-mid); }
+    .btn-ghost:hover { background: var(--bg-card-alt); color: var(--text); }
+    .btn-scan {
+      background: linear-gradient(135deg, var(--accent), #7c5cbf);
+      color: #fff; padding: 11px 24px; font-size: 14px; border-radius: var(--radius);
+    }
+    .btn-scan:hover { opacity: 0.9; }
+    .btn-row { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); gap: 8px; }
+
+    /* Loading */
+    .loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 20px; padding: 56px 24px;
+    }
+    .scan-anim { position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+    .scan-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1px solid var(--accent); opacity: 0.5;
+      animation: scan-pulse 1.8s ease-out infinite;
+    }
+    .scan-ring-2 { animation-delay: 0.9s; }
+    @keyframes scan-pulse { 0% { transform: scale(0.6); opacity: 0.6; } 100% { transform: scale(1.4); opacity: 0; } }
+    .scan-icon { font-size: 22px; color: var(--accent); z-index: 1; animation: icon-pulse 1.8s ease-in-out infinite; }
+    @keyframes icon-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .loading-text { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .loading-text span { font-size: 14px; font-weight: 500; color: var(--text); }
+    .loading-sub { font-size: 12px; color: var(--text-muted); }
+
+    /* Results */
+    .results-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .results-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 4px; }
+    .results-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .results-actions { display: flex; gap: 6px; flex-shrink: 0; margin-top: 2px; }
+
+    /* Badges */
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px; border-radius: var(--radius-sm);
+      font-size: 11px; font-weight: 600; border: 1px solid transparent;
+    }
+    .badge-green { background: var(--green-dim); border-color: rgba(62,207,142,0.2); color: var(--green); }
+    .badge-amber { background: var(--amber-dim); border-color: rgba(245,166,35,0.2); color: var(--amber); }
+    .badge-purple { background: var(--purple-dim); border-color: rgba(155,127,232,0.2); color: var(--purple); }
+    .badge-blue { background: var(--accent-glow); border-color: rgba(91,141,239,0.25); color: var(--accent); }
+
+    /* Tier */
+    .tier-label {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border);
+    }
+    .tier-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .tier-quick .tier-dot { background: var(--green); }
+    .tier-strategic .tier-dot { background: var(--purple); }
+    .tier-section { margin-bottom: 6px; }
+
+    /* Opp cards */
+    .opp-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .opp-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; transition: border-color 0.15s;
+    }
+    .opp-card:hover { border-color: var(--border-mid); }
+    .opp-card.quick-win  { border-left: 3px solid var(--green); }
+    .opp-card.strategic-bet { border-left: 3px solid var(--purple); }
+    .opp-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .opp-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .opp-category { font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .opp-rank { font-size: 16px; font-weight: 700; color: var(--text-dim); flex-shrink: 0; }
+    .opp-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .opp-pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 20px; font-size: 11px;
+      background: var(--bg-card-alt); border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .pill-lbl { color: var(--text-dim); font-size: 10px; }
+    .opp-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+    .opp-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tool-tag {
+      font-size: 10px; padding: 2px 6px;
+      background: var(--accent-glow); border: 1px solid rgba(91,141,239,0.2);
+      border-radius: 4px; color: var(--accent); font-family: var(--font-mono);
+    }
+
+    /* Brief */
+    .brief-hdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px; }
+    .output-content { font-size: 13px; line-height: 1.8; }
+    .output-content h2 { font-size: 16px; font-weight: 700; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .output-content h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); margin: 16px 0 6px; }
+    .output-content p { margin-bottom: 8px; }
+    .output-content ul, .output-content ol { padding-left: 18px; margin-bottom: 10px; }
+    .output-content li { margin-bottom: 3px; }
+    .output-content table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+    .output-content th { background: var(--bg-card-alt); color: var(--text-muted); font-weight: 600; text-align: left; padding: 6px 9px; border: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .output-content td { padding: 6px 9px; border: 1px solid var(--border); vertical-align: top; }
+    .output-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .output-content strong { font-weight: 600; }
+    .output-content code { background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+
+    .output-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 8px; }
+    .output-link { font-size: 12px; color: var(--text-dim); }
+    .output-link a { color: var(--text-muted); }
+    .output-link a:hover { color: var(--text); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 540px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Hero -->
+  <div id="input-section">
+    <div style="margin-bottom:16px;">
+      <h1 class="hero-title">Where should your company use AI?</h1>
+      <p class="hero-sub">Describe your company or team. Get a ranked map of AI opportunities — prioritised by impact, effort, and time to value.</p>
+    </div>
+
+    <form id="scan-form" class="card">
+      <div class="form-grid">
+
+        <div class="form-field full">
+          <label class="field-label" for="f-company">What does your company / team do?</label>
+          <p class="field-hint">Industry, size, what you sell or deliver, core function.</p>
+          <textarea id="f-company" class="textarea" rows="3" placeholder="e.g. B2B SaaS company, 80 people, selling project management software to construction firms..." required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="f-tasks">Most time-consuming tasks</label>
+          <p class="field-hint">Where does manual effort pile up?</p>
+          <textarea id="f-tasks" class="textarea" rows="3" placeholder="e.g. Writing status reports, triaging tickets, updating CRM..."></textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="f-tools">Current tools & stack</label>
+          <p class="field-hint">What software does the team run on?</p>
+          <textarea id="f-tools" class="textarea" rows="3" placeholder="e.g. Salesforce, Zendesk, Notion, Slack..."></textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="f-goal">Primary goal</label>
+          <p class="field-hint">What are you trying to improve?</p>
+          <select id="f-goal" class="select">
+            <option value="efficiency">Save time / reduce manual work</option>
+            <option value="revenue">Grow revenue / improve conversion</option>
+            <option value="quality">Improve output quality / reduce errors</option>
+            <option value="cost">Reduce costs / headcount</option>
+            <option value="cx">Improve customer experience</option>
+            <option value="speed">Move faster / ship quicker</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="f-ai">Current AI usage</label>
+          <p class="field-hint">Where are you today?</p>
+          <select id="f-ai" class="select">
+            <option value="none">None — starting from scratch</option>
+            <option value="exploring">Exploring — some ad-hoc use</option>
+            <option value="pilot">Pilot — one or two tools in use</option>
+            <option value="scaling">Scaling — AI deployed, want more</option>
+          </select>
+        </div>
+
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-scan">◈ Scan for Opportunities</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading hidden">
+    <div class="scan-anim">
+      <div class="scan-ring"></div>
+      <div class="scan-ring scan-ring-2"></div>
+      <span class="scan-icon">◈</span>
+    </div>
+    <div class="loading-text">
+      <span id="loading-text">Scanning for opportunities...</span>
+      <span class="loading-sub">Analysing processes, data flows, and AI fit</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-section" class="hidden">
+
+    <div class="results-hdr">
+      <div>
+        <p class="results-label">AI Opportunity Map</p>
+        <h2 class="results-title" id="results-title">Opportunity Analysis</h2>
+      </div>
+      <div class="results-actions">
+        <button id="copy-btn" class="btn btn-ghost">Copy</button>
+        <button id="rescan-btn" class="btn btn-ghost">New scan</button>
+      </div>
+    </div>
+
+    <div id="badges" class="badges"></div>
+    <div id="opp-cards" class="opp-cards"></div>
+
+    <p class="brief-hdr">Full analysis</p>
+    <div id="full-brief" class="output-content card"></div>
+
+    <div class="output-footer">
+      <button id="rescan-btn-2" class="btn btn-ghost">New scan</button>
+      <span class="output-link"><a href="https://ai-opportunity-scanner.vercel.app" target="_blank">Open full tool ↗</a></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'https://ai-opportunity-scanner.vercel.app/api/claude';
+
+const $ = id => document.getElementById(id);
+const inputSection   = $('input-section');
+const scanForm       = $('scan-form');
+const loadingEl      = $('loading');
+const loadingText    = $('loading-text');
+const resultsSection = $('results-section');
+const resultsTitle   = $('results-title');
+const badgesEl       = $('badges');
+const oppCards       = $('opp-cards');
+const fullBrief      = $('full-brief');
+const copyBtn        = $('copy-btn');
+
+scanForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const company = $('f-company').value.trim();
+  if (company.length < 20) { $('f-company').focus(); return; }
+
+  const ctx = buildCtx(company, $('f-tasks').value.trim(), $('f-tools').value.trim(), $('f-goal').value, $('f-ai').value);
+
+  inputSection.classList.add('hidden');
+  show('Scanning for opportunities...');
+
+  try {
+    const opps = await scanOpps(ctx);
+    loadingText.textContent = 'Writing full analysis...';
+    const brief = await genBrief(ctx, opps);
+    hide();
+    render(company, opps, brief);
+  } catch (err) {
+    hide();
+    inputSection.classList.remove('hidden');
+    alert('Error: ' + err.message);
+  }
+});
+
+$('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(fullBrief.innerText).then(() => {
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+  });
+});
+
+['rescan-btn','rescan-btn-2'].forEach(id => $( id).addEventListener('click', () => {
+  resultsSection.classList.add('hidden');
+  badgesEl.innerHTML = ''; oppCards.innerHTML = ''; fullBrief.innerHTML = '';
+  scanForm.reset();
+  inputSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+
+function buildCtx(company, tasks, tools, goal, aiLevel) {
+  const goals = { efficiency:'Save time / reduce manual work', revenue:'Grow revenue / improve conversion', quality:'Improve output quality / reduce errors', cost:'Reduce costs / headcount', cx:'Improve customer experience', speed:'Move faster / ship quicker' };
+  const ai    = { none:'None — starting from scratch', exploring:'Exploring — some ad-hoc use', pilot:'Pilot — one or two tools in use', scaling:'Scaling — AI deployed, want more' };
+  return [`Company/team: ${company}`, tasks ? `Time-consuming tasks: ${tasks}` : '', tools ? `Current tools: ${tools}` : '', `Primary goal: ${goals[goal]||goal}`, `Current AI: ${ai[aiLevel]||aiLevel}`].filter(Boolean).join('\n\n');
+}
+
+async function scanOpps(ctx) {
+  const sys = `You are a senior AI strategy consultant. Identify the top AI opportunities for this company.
+
+Return ONLY a valid JSON array of 5–8 opportunity objects. No preamble — just the array.
+
+Each object: { "title": string, "category": "Content & Comms|Customer Experience|Data & Analytics|Operations & Workflow|Sales & Revenue|Product & Development", "tier": "quick-win|strategic-bet", "impact": "High|Medium|Low", "effort": "Low|Medium|High", "time_to_value": string, "ai_type": string, "tools": string[], "description": string }
+
+Tier: quick-win = visible value within 4 weeks, low/medium effort. strategic-bet = transformational but longer runway.
+Rank quick-wins first by impact DESC.`;
+
+  const raw = await call([{ role:'user', content:ctx }], sys, 1200);
+  const m = raw.trim().match(/\[[\s\S]*\]/);
+  if (!m) throw new Error('Could not parse response. Please try again.');
+  const list = JSON.parse(m[0]);
+  if (!Array.isArray(list) || !list.length) throw new Error('No opportunities returned. Please try again.');
+  return list;
+}
+
+async function genBrief(ctx, opps) {
+  const oppSum = opps.map((o,i) => `${i+1}. ${o.title} [${o.tier}] — ${o.description}`).join('\n');
+  const sys = `You are a senior AI strategy consultant writing an executive opportunity brief in markdown.
+
+## AI Opportunity Brief
+
+### Executive Summary
+[3-4 sentence synthesis of where AI creates most value and what to do first]
+
+### Where to Start
+[Single highest-priority first action — specific tool, what to build, what to measure]
+
+### Opportunity Deep-Dives
+For each top 3 opportunities:
+#### [Name]
+**What it does:** ... **How to implement:** ... **Success metric:** ... **Recommended tool:** ...
+
+### Risks to Watch
+- [Risk and mitigation]
+
+### 90-Day Roadmap
+| Weeks | Focus | Deliverable |
+|-------|-------|-------------|
+| 1–2 | | |
+| 3–6 | | |
+| 7–12 | | |
+
+---
+*Generated by AI Opportunity Scanner · [romanmartins.com](https://romanmartins.com)*
+
+Be direct, specific. No buzzwords.`;
+
+  return await call([{ role:'user', content:`${ctx}\n\nOpportunities:\n${oppSum}` }], sys, 2000);
+}
+
+function render(company, opps, brief) {
+  resultsTitle.textContent = company.split(/[,.\n]/)[0].trim().slice(0, 60);
+
+  const quick = opps.filter(o => o.tier === 'quick-win');
+  const strat = opps.filter(o => o.tier === 'strategic-bet');
+  const high  = opps.filter(o => o.impact === 'High').length;
+
+  badgesEl.innerHTML = '';
+  mkBadge('⚡', `${quick.length} Quick Win${quick.length!==1?'s':''}`, 'badge-green');
+  mkBadge('◎', `${strat.length} Strategic Bet${strat.length!==1?'s':''}`, 'badge-purple');
+  mkBadge('▲', `${high} High Impact`, 'badge-amber');
+  mkBadge('◈', `${opps.length} Total`, 'badge-blue');
+
+  oppCards.innerHTML = '';
+  if (quick.length) {
+    const sec = mkTier('Quick Wins', 'tier-quick');
+    quick.forEach((o,i) => sec.appendChild(mkCard(o, i+1, 'quick-win')));
+    oppCards.appendChild(sec);
+  }
+  if (strat.length) {
+    const sec = mkTier('Strategic Bets', 'tier-strategic');
+    strat.forEach((o,i) => sec.appendChild(mkCard(o, quick.length+i+1, 'strategic-bet')));
+    oppCards.appendChild(sec);
+  }
+
+  fullBrief.innerHTML = marked.parse(brief);
+  resultsSection.classList.remove('hidden');
+  resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function mkBadge(icon, text, cls) {
+  const b = document.createElement('span');
+  b.className = `badge ${cls}`;
+  b.textContent = `${icon} ${text}`;
+  badgesEl.appendChild(b);
+}
+
+function mkTier(label, cls) {
+  const s = document.createElement('div');
+  s.className = `tier-section ${cls}`;
+  const l = document.createElement('div');
+  l.className = 'tier-label';
+  l.innerHTML = `<span class="tier-dot"></span>${label}`;
+  s.appendChild(l);
+  return s;
+}
+
+function mkCard(o, rank, cls) {
+  const c = document.createElement('div');
+  c.className = `opp-card ${cls}`;
+  const ic = { High:'#3ecf8e', Medium:'#f5a623', Low:'#666' };
+  const ec = { Low:'#3ecf8e', Medium:'#f5a623', High:'#e05a5a' };
+  const tools = Array.isArray(o.tools) ? o.tools.slice(0,4).map(t=>`<span class="tool-tag">${esc(t)}</span>`).join('') : '';
+  c.innerHTML = `
+    <div class="opp-hdr">
+      <div>
+        <div class="opp-title">${esc(o.title)}</div>
+        <div class="opp-category">${esc(o.category||'')}</div>
+      </div>
+      <div class="opp-rank">#${rank}</div>
+    </div>
+    <div class="opp-meta">
+      <span class="opp-pill"><span class="pill-lbl">Impact</span> <span style="color:${ic[o.impact]||'#666'};font-weight:700">${esc(o.impact)}</span></span>
+      <span class="opp-pill"><span class="pill-lbl">Effort</span> <span style="color:${ec[o.effort]||'#666'};font-weight:700">${esc(o.effort)}</span></span>
+      <span class="opp-pill"><span class="pill-lbl">Time to value</span> ${esc(o.time_to_value)}</span>
+      <span class="opp-pill">${esc(o.ai_type)}</span>
+    </div>
+    ${o.description?`<div class="opp-desc">${esc(o.description)}</div>`:''}
+    ${tools?`<div class="opp-tools">${tools}</div>`:''}
+  `;
+  return c;
+}
+
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function call(messages, system, max_tokens) {
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ messages, system, max_tokens }),
+  });
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({}));
+    if (r.status === 429) throw new Error('Rate limit reached. Please wait and try again.');
+    throw new Error(e?.error ?? `Server error ${r.status}`);
+  }
+  const d = await r.json();
+  return d.content?.[0]?.text ?? '';
+}
+
+function show(t) { loadingText.textContent = t; loadingEl.classList.remove('hidden'); }
+function hide() { loadingEl.classList.add('hidden'); }
+</script>
+</body>
+</html>
