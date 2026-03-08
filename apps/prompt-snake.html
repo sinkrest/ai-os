@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prompt Snake</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080b0f;
+      --grid-bg:  #090d12;
+      --border:   #1a2030;
+      --dim:      #1e2a3a;
+      --role:     #5b8def;
+      --context:  #3ecf8e;
+      --example:  #f0a04b;
+      --constraint:#e05a7a;
+      --format:   #a78bfa;
+      --text:     #c8d8f0;
+      --muted:    #3a4a60;
+      --font:     'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      max-width: 900px;
+      margin: 0 auto;
+      gap: 0;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,11,15,0.9);
+    }
+
+    .topbar-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--context);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .topbar-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 10px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 11px;
+    }
+
+    .score-item { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .score-label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .score-val { color: var(--text); font-weight: 700; font-size: 13px; }
+
+    /* quality bar */
+    .quality-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .quality-bar {
+      width: 80px; height: 4px;
+      background: var(--dim);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .quality-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--role), var(--context), var(--format));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Game area ───────────────────────────────────────────── */
+    .game-area {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border-right: 1px solid var(--border);
+    }
+
+    canvas {
+      display: block;
+      border: 1px solid var(--border);
+      background: var(--grid-bg);
+      image-rendering: pixelated;
+    }
+
+    /* scanlines overlay */
+    canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ── Overlay screens ─────────────────────────────────────── */
+    .overlay {
+      position: absolute;
+      inset: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8,11,15,0.92);
+      border: 1px solid var(--border);
+      text-align: center;
+      gap: 12px;
+      padding: 32px;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .overlay-title {
+      font-size: clamp(18px, 3vw, 26px);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .overlay-sub {
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 360px;
+      line-height: 1.6;
+    }
+
+    .overlay-error {
+      font-size: 11px;
+      color: var(--constraint);
+      font-style: italic;
+    }
+
+    .btn-start {
+      margin-top: 8px;
+      background: var(--context);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 28px;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: opacity 0.15s;
+    }
+
+    .btn-start:hover { opacity: 0.85; }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(9,13,18,0.6);
+    }
+
+    .sidebar-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* Prompt preview */
+    .prompt-preview {
+      font-size: 10px;
+      line-height: 1.8;
+      min-height: 120px;
+      color: var(--muted);
+    }
+
+    .prompt-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 2px;
+      animation: fadein 0.3s ease;
+    }
+
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .prompt-key {
+      font-weight: 700;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .prompt-val { color: var(--text); font-size: 10px; }
+
+    /* Output preview */
+    .output-preview {
+      font-size: 10px;
+      line-height: 1.7;
+      color: var(--muted);
+      font-style: italic;
+      min-height: 80px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .output-cursor {
+      display: inline-block;
+      width: 6px; height: 11px;
+      background: var(--context);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Element counter */
+    .element-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .element-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      font-size: 10px;
+      transition: all 0.2s;
+    }
+
+    .element-chip.inactive { opacity: 0.3; }
+
+    .element-chip-name { font-weight: 700; }
+    .element-chip-count {
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 9px;
+    }
+
+    /* ── Status bar ──────────────────────────────────────────── */
+    .statusbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 7px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .status-key { color: var(--text); font-weight: 600; margin-right: 3px; }
+
+    /* ── Eat flash ───────────────────────────────────────────── */
+    .eat-flash {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 5px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .eat-flash.show {
+      opacity: 1;
+      animation: flash-anim 0.7s ease forwards;
+    }
+
+    @keyframes flash-anim {
+      0%   { opacity: 1; transform: translate(-50%, -60%); }
+      100% { opacity: 0; transform: translate(-50%, -100%); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:4px;">
+      <span class="topbar-title">Prompt Snake</span>
+      <span class="topbar-sub">// build the perfect prompt, don't bite yourself</span>
+    </div>
+    <div class="score-row">
+      <div class="score-item">
+        <span class="score-label">Length</span>
+        <span class="score-val" id="score-length">3</span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">Tokens</span>
+        <span class="score-val" id="score-tokens">0</span>
+      </div>
+      <div class="score-item quality-bar-wrap">
+        <span class="score-label">Prompt Quality</span>
+        <div class="quality-bar"><div class="quality-fill" id="quality-fill"></div></div>
+        <span class="score-val" id="score-quality">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game area -->
+  <div class="game-area" id="game-area">
+    <canvas id="canvas"></canvas>
+
+    <!-- Eat flash -->
+    <div class="eat-flash" id="eat-flash"></div>
+
+    <!-- Start screen -->
+    <div class="overlay" id="overlay-start">
+      <span class="overlay-badge" style="background:rgba(62,207,142,0.12);color:var(--context);">v1.0 · stable</span>
+      <div class="overlay-title" style="color:var(--text);">You are a prompt.<br>Grow. Don't hallucinate.</div>
+      <div class="overlay-sub">Collect prompt elements to build a high-quality LLM prompt. Each element type improves your Prompt Quality score. Avoid walls and yourself.</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--role)"></div> [ROLE]</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--context)"></div> [CONTEXT]</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--example)"></div> [EXAMPLE]</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--constraint)"></div> [CONSTRAINT]</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--format)"></div> [FORMAT]</div>
+      </div>
+      <button class="btn-start" id="btn-start">$ run prompt_snake.py</button>
+    </div>
+
+    <!-- Death screen -->
+    <div class="overlay hidden" id="overlay-death">
+      <span class="overlay-badge" id="death-badge" style="background:rgba(224,90,122,0.12);color:var(--constraint);">RUNTIME ERROR</span>
+      <div class="overlay-title" id="death-title" style="color:var(--constraint);"></div>
+      <div class="overlay-error" id="death-error"></div>
+      <div class="overlay-sub" id="death-stats"></div>
+      <button class="btn-start" id="btn-restart">$ restart --reset</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">// prompt being built</div>
+      <div class="prompt-preview" id="prompt-preview">
+        <span style="color:var(--muted);font-style:italic;font-size:10px;">[ start collecting elements... ]</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">// elements collected</div>
+      <div class="element-grid">
+        <div class="element-chip inactive" id="chip-role" style="border-color:var(--role);color:var(--role);">
+          <span class="element-chip-name">[ROLE]</span>
+          <span class="element-chip-count" id="count-role">0</span>
+        </div>
+        <div class="element-chip inactive" id="chip-context" style="border-color:var(--context);color:var(--context);">
+          <span class="element-chip-name">[CONTEXT]</span>
+          <span class="element-chip-count" id="count-context">0</span>
+        </div>
+        <div class="element-chip inactive" id="chip-example" style="border-color:var(--example);color:var(--example);">
+          <span class="element-chip-name">[EXAMPLE]</span>
+          <span class="element-chip-count" id="count-example">0</span>
+        </div>
+        <div class="element-chip inactive" id="chip-constraint" style="border-color:var(--constraint);color:var(--constraint);">
+          <span class="element-chip-name">[CONSTRAINT]</span>
+          <span class="element-chip-count" id="count-constraint">0</span>
+        </div>
+        <div class="element-chip inactive" id="chip-format" style="border-color:var(--format);color:var(--format);" style="grid-column:1/-1;">
+          <span class="element-chip-name">[FORMAT]</span>
+          <span class="element-chip-count" id="count-format">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="sidebar-label">// simulated output</div>
+      <div class="output-preview" id="output-preview">
+        <span style="color:var(--muted);">waiting for input</span><span class="output-cursor"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span><span class="status-key">↑↓←→</span> move</span>
+    <span><span class="status-key">WASD</span> move</span>
+    <span><span class="status-key">P</span> pause</span>
+    <span style="margin-left:auto;color:var(--context);" id="status-msg">ready</span>
+  </div>
+
+</div>
+
+<script>
+/* ── Config ──────────────────────────────────────────────── */
+const COLS = 22, ROWS = 22;
+const CELL = 22;
+const BASE_SPEED = 150;   // ms per tick
+const MIN_SPEED  = 75;
+
+const ELEMENTS = [
+  {
+    id: 'role', label: 'ROLE', color: '#5b8def',
+    promptText: 'You are a senior AI product manager with 10 years of experience.',
+    outputContrib: 'Adopting the requested role and expertise level.',
+    tokens: 12,
+  },
+  {
+    id: 'context', label: 'CONTEXT', color: '#3ecf8e',
+    promptText: 'Context: The user is asking about AI implementation for a B2B SaaS company.',
+    outputContrib: 'I understand the B2B SaaS context.',
+    tokens: 18,
+  },
+  {
+    id: 'example', label: 'EXAMPLE', color: '#f0a04b',
+    promptText: 'Example: "Our CRM auto-routes leads" → implementation: classifier + Salesforce API.',
+    outputContrib: 'Using the provided example as a reference pattern.',
+    tokens: 22,
+  },
+  {
+    id: 'constraint', label: 'CONSTRAINT', color: '#e05a7a',
+    promptText: 'Constraints: Be concise. No jargon. Max 200 words.',
+    outputContrib: 'Applying constraints: concise, no jargon, under 200 words.',
+    tokens: 10,
+  },
+  {
+    id: 'format', label: 'FORMAT', color: '#a78bfa',
+    promptText: 'Format: Respond in structured markdown with headers and a summary table.',
+    outputContrib: '## Response\n\nHere is the structured analysis...',
+    tokens: 14,
+  },
+];
+
+const DEATH_MESSAGES = {
+  wall: {
+    title: 'Context Boundary Exceeded',
+    error: 'IndexError: position out of context window',
+    badge: 'CONTEXT ERROR',
+  },
+  self: {
+    title: 'Circular Reasoning Detected',
+    error: 'RecursionError: prompt references itself',
+    badge: 'HALLUCINATION',
+  },
+};
+
+/* ── State ───────────────────────────────────────────────── */
+let snake, dir, nextDir, food, collected, tokens, gameLoop, paused, running;
+
+/* ── Canvas ──────────────────────────────────────────────── */
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+canvas.width  = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+/* ── DOM ─────────────────────────────────────────────────── */
+const overlayStart  = document.getElementById('overlay-start');
+const overlayDeath  = document.getElementById('overlay-death');
+const btnStart      = document.getElementById('btn-start');
+const btnRestart    = document.getElementById('btn-restart');
+const eatFlash      = document.getElementById('eat-flash');
+const promptPreview = document.getElementById('prompt-preview');
+const outputPreview = document.getElementById('output-preview');
+const statusMsg     = document.getElementById('status-msg');
+const qualityFill   = document.getElementById('quality-fill');
+
+/* ── Init ────────────────────────────────────────────────── */
+btnStart.addEventListener('click', startGame);
+btnRestart.addEventListener('click', startGame);
+
+document.addEventListener('keydown', e => {
+  const map = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right',
+    W:'up', S:'down', A:'left', D:'right',
+  };
+  if (map[e.key]) {
+    e.preventDefault();
+    const proposed = map[e.key];
+    const opposites = { up:'down', down:'up', left:'right', right:'left' };
+    if (opposites[proposed] !== dir) nextDir = proposed;
+  }
+  if (e.key === 'p' || e.key === 'P') togglePause();
+});
+
+function startGame() {
+  overlayStart.classList.add('hidden');
+  overlayDeath.classList.add('hidden');
+
+  snake = [
+    { x: 10, y: 11 },
+    { x:  9, y: 11 },
+    { x:  8, y: 11 },
+  ];
+  dir = 'right';
+  nextDir = 'right';
+  collected = { role: 0, context: 0, example: 0, constraint: 0, format: 0 };
+  tokens = 0;
+  paused = false;
+  running = true;
+
+  spawnFood();
+  updateSidebar();
+  updatePromptPreview();
+
+  clearInterval(gameLoop);
+  tick();
+
+  statusMsg.textContent = 'running';
+}
+
+/* ── Game loop ───────────────────────────────────────────── */
+function tick() {
+  if (!running) return;
+  if (paused) { gameLoop = setTimeout(tick, 100); return; }
+
+  dir = nextDir;
+
+  const head = snake[0];
+  const delta = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[dir];
+  const newHead = { x: head.x + delta[0], y: head.y + delta[1] };
+
+  // Wall collision
+  if (newHead.x < 0 || newHead.x >= COLS || newHead.y < 0 || newHead.y >= ROWS) {
+    return die('wall');
+  }
+
+  // Self collision
+  if (snake.some(s => s.x === newHead.x && s.y === newHead.y)) {
+    return die('self');
+  }
+
+  snake.unshift(newHead);
+
+  // Food collision
+  if (newHead.x === food.x && newHead.y === food.y) {
+    eat();
+  } else {
+    snake.pop();
+  }
+
+  draw();
+
+  const speed = Math.max(MIN_SPEED, BASE_SPEED - snake.length * 3);
+  gameLoop = setTimeout(tick, speed);
+}
+
+function eat() {
+  const el = food.element;
+  collected[el.id]++;
+  tokens += el.tokens;
+
+  showFlash(`+${el.tokens} tokens · [${el.label}]`, el.color);
+  updateSidebar();
+  updatePromptPreview();
+  spawnFood();
+}
+
+/* ── Food ────────────────────────────────────────────────── */
+function spawnFood() {
+  const el = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+  food = { ...pos, element: el };
+}
+
+/* ── Draw ────────────────────────────────────────────────── */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(26,32,48,0.5)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y <= ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(canvas.width, y * CELL); ctx.stroke();
+  }
+
+  // Food
+  drawFood();
+
+  // Snake body (reverse so head draws on top)
+  for (let i = snake.length - 1; i >= 0; i--) {
+    drawSegment(snake[i], i);
+  }
+
+  // UI overlay (score in canvas)
+  document.getElementById('score-length').textContent = snake.length;
+  document.getElementById('score-tokens').textContent = tokens;
+  const quality = calcQuality();
+  document.getElementById('score-quality').textContent = quality + '%';
+  qualityFill.style.width = quality + '%';
+}
+
+function drawFood() {
+  const el = food.element;
+  const cx = food.x * CELL + CELL / 2;
+  const cy = food.y * CELL + CELL / 2;
+  const r  = CELL / 2 - 3;
+
+  // Glow
+  ctx.shadowColor = el.color;
+  ctx.shadowBlur = 10;
+
+  ctx.fillStyle = el.color + '22';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = el.color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  // Label
+  ctx.fillStyle = '#000';
+  ctx.font = `bold 6px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(el.label.slice(0, 3), cx, cy);
+}
+
+function drawSegment(seg, index) {
+  const x = seg.x * CELL + 1;
+  const y = seg.y * CELL + 1;
+  const w = CELL - 2;
+  const h = CELL - 2;
+
+  // Determine color from what's been collected
+  const colorOrder = ['role','context','example','constraint','format'];
+  let segColor;
+
+  if (index === 0) {
+    // Head: color of next food element
+    segColor = food.element.color;
+    // Head glow
+    ctx.shadowColor = segColor;
+    ctx.shadowBlur = 8;
+  } else {
+    // Body: cycle through collected element types
+    const collectedTypes = colorOrder.filter(id => collected[id] > 0);
+    if (collectedTypes.length > 0) {
+      const type = collectedTypes[(index - 1) % collectedTypes.length];
+      segColor = ELEMENTS.find(e => e.id === type).color;
+    } else {
+      segColor = '#2a3a50';
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  const radius = index === 0 ? 5 : 4;
+
+  // Segment background
+  ctx.fillStyle = segColor + (index === 0 ? 'dd' : '55');
+  roundRect(ctx, x, y, w, h, radius);
+  ctx.fill();
+
+  // Segment border
+  ctx.strokeStyle = segColor + (index === 0 ? 'ff' : '99');
+  ctx.lineWidth = index === 0 ? 1.5 : 0.5;
+  roundRect(ctx, x, y, w, h, radius);
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+
+  // Head eyes
+  if (index === 0) {
+    ctx.fillStyle = '#fff';
+    const eyeOffset = { up:[[-3,-3],[3,-3]], down:[[-3,3],[3,3]], left:[[-4,-2],[-4,2]], right:[[4,-2],[4,2]] }[dir];
+    const cx = seg.x * CELL + CELL / 2;
+    const cy = seg.y * CELL + CELL / 2;
+    eyeOffset.forEach(([ex, ey]) => {
+      ctx.beginPath();
+      ctx.arc(cx + ex, cy + ey, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // Body text label (only every 3rd segment, if wide enough)
+  if (index > 0 && index % 2 === 0) {
+    const collectedTypes = colorOrder.filter(id => collected[id] > 0);
+    if (collectedTypes.length > 0) {
+      const type = collectedTypes[(index - 1) % collectedTypes.length];
+      const label = type.slice(0, 2).toUpperCase();
+      ctx.fillStyle = segColor;
+      ctx.font = `600 6px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, seg.x * CELL + CELL / 2, seg.y * CELL + CELL / 2);
+    }
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/* ── Sidebar updates ─────────────────────────────────────── */
+function updateSidebar() {
+  ELEMENTS.forEach(el => {
+    const count = collected[el.id];
+    document.getElementById(`count-${el.id}`).textContent = count;
+    const chip = document.getElementById(`chip-${el.id}`);
+    if (count > 0) chip.classList.remove('inactive');
+    else chip.classList.add('inactive');
+  });
+  updateOutputPreview();
+}
+
+function updatePromptPreview() {
+  const lines = [];
+  ELEMENTS.forEach(el => {
+    const count = collected[el.id];
+    if (count > 0) {
+      lines.push(`<div class="prompt-line">
+        <span class="prompt-key" style="background:${el.color}22;color:${el.color}">[${el.label}]</span>
+        <span class="prompt-val">${el.promptText}</span>
+      </div>`);
+    }
+  });
+
+  if (lines.length === 0) {
+    promptPreview.innerHTML = `<span style="color:var(--muted);font-style:italic;font-size:10px;">[ start collecting elements... ]</span>`;
+  } else {
+    promptPreview.innerHTML = lines.join('');
+  }
+}
+
+function updateOutputPreview() {
+  const total = Object.values(collected).reduce((a, b) => a + b, 0);
+  if (total === 0) {
+    outputPreview.innerHTML = `<span style="color:var(--muted);">waiting for input</span><span class="output-cursor"></span>`;
+    return;
+  }
+
+  const parts = [];
+  ELEMENTS.forEach(el => {
+    if (collected[el.id] > 0) parts.push(el.outputContrib);
+  });
+
+  const quality = calcQuality();
+  let confidence = quality < 30 ? 'low confidence' : quality < 60 ? 'moderate confidence' : quality < 85 ? 'high confidence' : 'optimal';
+
+  outputPreview.innerHTML = `<span style="color:var(--context);">[generating · ${confidence}]</span><br><br>${parts.join('<br>')}<span class="output-cursor"></span>`;
+}
+
+function calcQuality() {
+  const types = ELEMENTS.filter(el => collected[el.id] > 0).length;
+  const totalItems = Object.values(collected).reduce((a, b) => a + b, 0);
+  const diversityScore = (types / ELEMENTS.length) * 60;
+  const volumeScore = Math.min(totalItems * 4, 40);
+  return Math.min(Math.round(diversityScore + volumeScore), 100);
+}
+
+/* ── Flash ───────────────────────────────────────────────── */
+function showFlash(text, color) {
+  eatFlash.textContent = text;
+  eatFlash.style.background = color + '22';
+  eatFlash.style.color = color;
+  eatFlash.style.border = `1px solid ${color}55`;
+  eatFlash.classList.remove('show');
+  void eatFlash.offsetWidth;
+  eatFlash.classList.add('show');
+}
+
+/* ── Death ───────────────────────────────────────────────── */
+function die(cause) {
+  running = false;
+  clearTimeout(gameLoop);
+
+  const msg = DEATH_MESSAGES[cause];
+  const quality = calcQuality();
+  const types = ELEMENTS.filter(el => collected[el.id] > 0).length;
+
+  document.getElementById('death-badge').textContent = msg.badge;
+  document.getElementById('death-title').textContent = msg.title;
+  document.getElementById('death-error').textContent = msg.error;
+  document.getElementById('death-stats').innerHTML =
+    `Length: ${snake.length} segments &nbsp;·&nbsp; Tokens: ${tokens} &nbsp;·&nbsp; Prompt Quality: ${quality}%<br>` +
+    `Elements collected: ${types}/5 types`;
+
+  overlayDeath.classList.remove('hidden');
+  statusMsg.textContent = 'terminated';
+}
+
+/* ── Pause ───────────────────────────────────────────────── */
+function togglePause() {
+  if (!running) return;
+  paused = !paused;
+  statusMsg.textContent = paused ? 'paused' : 'running';
+}
+
+/* ── Initial draw ────────────────────────────────────────── */
+ctx.fillStyle = '#090d12';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+</script>
+</body>
+</html>
