@@ -1,6 +1,6 @@
-# Roman OS
+# Roman's Lab
 
-A browser-based personal operating system — a collection of AI-built tools, interactive apps, and experiments, all running inside a single tabbed interface.
+A browser-based lab — a collection of AI-built tools, interactive apps, and experiments, all running inside a single tabbed interface.
 
 **Live:** [sinkrest.github.io/roman-os](https://sinkrest.github.io/roman-os) &nbsp;·&nbsp; Built with [Claude Code](https://claude.ai/code)
 
@@ -8,7 +8,7 @@ A browser-based personal operating system — a collection of AI-built tools, in
 
 ## What It Is
 
-Roman OS is an OS-style web interface where each "app" is a standalone interactive tool. Navigation works like a browser: click an app to open it in a tab, click Home to return to the launcher.
+Roman's Lab is a browser-based launcher where each "app" is a standalone interactive tool. Navigation works like a browser: click an app to open it in a tab, click Home to return to the launcher.
 
 No frameworks. No build step. Pure HTML, CSS, and JavaScript — deliberately keeping it lightweight and instantly deployable.
 
@@ -37,6 +37,11 @@ Track AI token consumption, model usage, and execution history across Claude and
 
 ### 🏭 Product Pipeline
 A strategy game where you navigate a product through development stages — collect milestones, dodge scope creep, ship before budget runs out.
+
+### ⬡ AI Scoping Tool — Live AI Tool
+Describe a business problem. Answer 3 discovery questions. Get a structured AI implementation plan — recommended AI approach, process automation breakdown, effort vs. impact, phased rollout, risks, and success metrics. Powered by Claude API.
+
+**[Live demo →](https://sinkrest.github.io/ai-scoping-tool)**
 
 ### 📬 The Industrial Edge
 Newsletter landing page for Industrial Product Development Managers — AI, smart manufacturing, and product strategy.
