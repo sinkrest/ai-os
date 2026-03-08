@@ -2,7 +2,7 @@
 
 A browser-based lab — a collection of AI-built tools, interactive apps, and experiments, all running inside a single tabbed interface.
 
-**Live:** [sinkrest.github.io/roman-os](https://sinkrest.github.io/roman-os) &nbsp;·&nbsp; Built with [Claude Code](https://claude.ai/code)
+**Live:** [sinkrest.github.io/romans-lab](https://sinkrest.github.io/romans-lab) &nbsp;·&nbsp; Built with [Claude Code](https://claude.ai/code)
 
 ---
 
@@ -91,4 +91,4 @@ open index.html
 
 ---
 
-Built by [Roman Martins](https://romanmartins.com) using Claude Code.
+Built by [Roman Martins](https://romanmartins.com) using Claude Code · [github.com/sinkrest/romans-lab](https://github.com/sinkrest/romans-lab)
