@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Discovery Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a0a;
+      --bg-card:     #111111;
+      --bg-card-alt: #161616;
+      --border:      #1e1e1e;
+      --border-mid:  #2a2a2a;
+      --text:        #e8e8e8;
+      --text-muted:  #666;
+      --text-dim:    #333;
+      --accent:      #5b8def;
+      --accent-glow: rgba(91,141,239,0.15);
+      --accent-dark: #3b6dcf;
+      --green:       #3ecf8e;
+      --radius:      10px;
+      --radius-sm:   6px;
+      --font:        -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+
+    html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 56px;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Phase tracker */
+    .phase-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 4px;
+    }
+    .phase-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--border-mid);
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .phase-dot.active   { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+    .phase-dot.complete { background: var(--green); }
+    .phase-line { width: 20px; height: 1px; background: var(--border-mid); }
+
+    /* Phase header */
+    .phase-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 6px;
+    }
+    .phase-title {
+      font-size: clamp(20px, 3.5vw, 28px);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .phase-sub { font-size: 13px; color: var(--text-muted); max-width: 520px; margin-bottom: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    /* Fields */
+    .field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-muted); margin-bottom: 5px;
+    }
+    .field-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; }
+
+    .textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      resize: vertical;
+      line-height: 1.6;
+      min-height: 60px;
+    }
+    .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; border: none; white-space: nowrap;
+      font-family: var(--font);
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-mid); }
+    .btn-ghost:hover { background: var(--bg-card-alt); color: var(--text); }
+    .btn-row { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+    .error-msg { font-size: 11px; color: #e05a5a; margin-top: 6px; }
+
+    /* Persona grid */
+    .persona-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .persona-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      position: relative; overflow: hidden;
+    }
+    .persona-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 10px 10px 0 0;
+    }
+    .persona-avatar { font-size: 28px; line-height: 1; }
+    .persona-name { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+    .persona-role { font-size: 11px; color: var(--text-muted); margin-top: -6px; }
+    .persona-detail-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 3px;
+    }
+    .persona-detail-text { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    .persona-quote {
+      border-left: 2px solid;
+      padding-left: 8px; font-size: 11px;
+      color: var(--text-muted); font-style: italic;
+    }
+
+    /* Active persona */
+    .active-persona {
+      display: flex; align-items: center; gap: 16px;
+      border-left: 3px solid var(--accent);
+    }
+    .active-persona-avatar { font-size: 36px; flex-shrink: 0; }
+    .active-persona-name { font-size: 16px; font-weight: 700; }
+    .active-persona-role { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .active-persona-context { font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
+
+    /* Interview thread */
+    .thread { display: flex; flex-direction: column; gap: 12px; }
+
+    .bubble { display: flex; flex-direction: column; gap: 3px; }
+    .bubble-role {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-dim);
+    }
+    .bubble-persona .bubble-role { color: var(--accent); }
+    .bubble-you .bubble-role { color: var(--green); }
+
+    .bubble-body {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 13px 17px;
+      font-size: 13px; line-height: 1.75;
+    }
+    .bubble-persona .bubble-body { border-left: 3px solid var(--accent); }
+    .bubble-you .bubble-body {
+      border-left: 3px solid var(--green);
+      background: var(--bg-card-alt); color: var(--text-muted); font-style: italic;
+    }
+
+    /* Generate prompt */
+    .generate-prompt {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      padding: 24px; border: 1px dashed var(--border-mid);
+      border-radius: var(--radius); text-align: center;
+    }
+    .generate-prompt p { font-size: 13px; color: var(--text-muted); }
+    .btn-generate {
+      background: linear-gradient(135deg, var(--accent), #7c5cbf);
+      color: #fff; padding: 10px 24px; font-size: 13px;
+      border-radius: var(--radius); border: none;
+      font-family: var(--font); font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-generate:hover { opacity: 0.9; }
+
+    /* Loading */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 36px; color: var(--text-muted); font-size: 13px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border-mid); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Output */
+    .output-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 12px;
+    }
+    .output-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-muted);
+    }
+    .output-content { font-size: 13px; line-height: 1.8; }
+    .output-content h2 {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+      margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .output-content h3 {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--accent); margin: 18px 0 7px;
+    }
+    .output-content p { color: var(--text); margin-bottom: 9px; }
+    .output-content ul, .output-content ol { padding-left: 18px; margin-bottom: 9px; }
+    .output-content li { color: var(--text); margin-bottom: 3px; }
+    .output-content table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px; }
+    .output-content th {
+      background: var(--bg-card-alt); color: var(--text-muted); font-weight: 600;
+      text-align: left; padding: 7px 10px; border: 1px solid var(--border);
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .output-content td { padding: 7px 10px; border: 1px solid var(--border); color: var(--text); vertical-align: top; }
+    .output-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .output-content strong { color: var(--text); font-weight: 600; }
+    .output-footer { display: flex; justify-content: space-between; margin-top: 14px; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 580px) {
+      .persona-grid { grid-template-columns: 1fr; }
+      .active-persona { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Phase 1 -->
+  <div id="phase-1">
+    <div class="phase-track">
+      <div class="phase-dot active" id="dot-1"></div><div class="phase-line"></div>
+      <div class="phase-dot" id="dot-2"></div><div class="phase-line"></div>
+      <div class="phase-dot" id="dot-3"></div><div class="phase-line"></div>
+      <div class="phase-dot" id="dot-4"></div>
+    </div>
+    <div class="phase-label">Phase 1 of 4</div>
+    <div class="phase-title">What product idea do you want to validate?</div>
+    <p class="phase-sub">Describe the problem space or concept. Good discovery works better with rough ideas than polished ones.</p>
+    <div class="card">
+      <label class="field-label" for="problem-input">Product idea or problem space</label>
+      <p class="field-hint">e.g. "An AI tool that helps freelancers manage invoicing and cash flow" or "A platform for async engineering standups"</p>
+      <textarea id="problem-input" class="textarea" rows="4" placeholder="Describe your product idea..."></textarea>
+      <div class="btn-row">
+        <button id="problem-submit" class="btn btn-primary">Generate Personas →</button>
+      </div>
+      <p id="problem-error" class="error-msg hidden">Please describe your idea (at least 20 characters).</p>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div id="phase-2" class="hidden">
+    <div class="phase-track">
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot active"></div><div class="phase-line"></div>
+      <div class="phase-dot"></div><div class="phase-line"></div>
+      <div class="phase-dot"></div>
+    </div>
+    <div class="phase-label">Phase 2 of 4</div>
+    <div class="phase-title">Meet your users</div>
+    <p class="phase-sub">Three people who might use your product. You're about to interview them.</p>
+    <div id="persona-grid" class="persona-grid"></div>
+    <div class="btn-row" style="margin-top:20px;">
+      <button id="start-interviews" class="btn btn-primary">Start Interviews →</button>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div id="phase-3" class="hidden">
+    <div class="phase-track">
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot active"></div><div class="phase-line"></div>
+      <div class="phase-dot"></div>
+    </div>
+    <div class="phase-label" id="interview-label">Phase 3 of 4 · Interview 1 of 3</div>
+    <div class="phase-title" id="interview-title">Discovery Interview</div>
+    <p class="phase-sub" id="interview-sub">Listen to what this person volunteers. Then ask one follow-up question.</p>
+
+    <div id="active-persona" class="active-persona card"></div>
+    <div id="thread" class="thread"></div>
+
+    <div id="followup-section" class="card hidden" style="margin-top:0;">
+      <label class="field-label">Ask a follow-up question</label>
+      <p class="field-hint">You get one question per persona — make it count. (Cmd+Enter to send)</p>
+      <textarea id="followup-input" class="textarea" rows="2" placeholder="e.g. How are you solving this today?"></textarea>
+      <div class="btn-row">
+        <button id="followup-submit" class="btn btn-primary">Ask →</button>
+      </div>
+    </div>
+
+    <div id="next-section" class="hidden" style="text-align:center;padding:20px 0;">
+      <button id="next-btn" class="btn btn-primary" style="min-width:180px;"></button>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div id="phase-4" class="hidden">
+    <div class="phase-track">
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot complete"></div><div class="phase-line"></div>
+      <div class="phase-dot active"></div>
+    </div>
+    <div class="phase-label">Phase 4 of 4</div>
+    <div class="phase-title">Opportunity Brief</div>
+    <p class="phase-sub">Synthesised from all three discovery interviews.</p>
+    <div class="output-header">
+      <span class="output-label">PM synthesis</span>
+      <button id="copy-btn" class="btn btn-ghost">Copy</button>
+    </div>
+    <div id="brief" class="output-content card"></div>
+    <div class="output-footer">
+      <button id="restart-btn" class="btn btn-ghost">Start over</button>
+      <a href="https://ai-discovery-simulator.vercel.app" target="_blank" class="btn btn-ghost">Open full tool ↗</a>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <span id="loading-text">Generating personas...</span>
+  </div>
+
+</div>
+<script>
+const API = 'https://ai-discovery-simulator.vercel.app/api/claude';
+const COLORS  = ['#5b8def','#3ecf8e','#f0a04b'];
+const AVATARS = ['👩‍💻','👨‍💼','🧑‍🎨'];
+
+let state = { problem:'', personas:[], current:0, interviews:[], followupAsked:false };
+
+const $ = id => document.getElementById(id);
+
+$('problem-submit').addEventListener('click', handleProblem);
+$('start-interviews').addEventListener('click', startInterviews);
+$('followup-submit').addEventListener('click', handleFollowup);
+$('next-btn').addEventListener('click', nextPersona);
+$('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText($('brief').innerText).then(() => {
+    $('copy-btn').textContent = 'Copied!';
+    setTimeout(() => $('copy-btn').textContent = 'Copy', 2000);
+  });
+});
+$('restart-btn').addEventListener('click', () => {
+  state = { problem:'', personas:[], current:0, interviews:[], followupAsked:false };
+  $('problem-input').value = '';
+  $('thread').innerHTML = '';
+  showPhase(1);
+});
+$('followup-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleFollowup();
+});
+
+function showPhase(n) {
+  [1,2,3,4].forEach(i => $(`phase-${i}`).classList.toggle('hidden', i !== n));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── Phase 1 ── */
+async function handleProblem() {
+  const p = $('problem-input').value.trim();
+  if (p.length < 20) { $('problem-error').classList.remove('hidden'); return; }
+  $('problem-error').classList.add('hidden');
+  state.problem = p;
+  showPhase(1); showLoading('Creating user personas...');
+  try {
+    state.personas = await genPersonas(p);
+    hideLoading(); renderPersonas(); showPhase(2);
+  } catch(e) { hideLoading(); alert(e.message); }
+}
+
+/* ── Phase 2 ── */
+function renderPersonas() {
+  const grid = $('persona-grid');
+  grid.innerHTML = '';
+  state.personas.forEach((p, i) => {
+    const c = COLORS[i], av = AVATARS[i];
+    const card = document.createElement('div');
+    card.className = 'persona-card';
+    const frus = p.frustrations.slice(0,3).map(f=>`<li>${f}</li>`).join('');
+    card.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${c};border-radius:10px 10px 0 0;"></div>
+      <div class="persona-avatar">${av}</div>
+      <div>
+        <div class="persona-name" style="color:${c}">${p.name}</div>
+        <div class="persona-role">${p.role}</div>
+      </div>
+      <div>
+        <div class="persona-detail-label" style="color:${c}">Context</div>
+        <div class="persona-detail-text">${p.context}</div>
+      </div>
+      <div>
+        <div class="persona-detail-label" style="color:${c}">Goals</div>
+        <div class="persona-detail-text">${p.goals}</div>
+      </div>
+      <div>
+        <div class="persona-detail-label" style="color:${c}">Frustrations</div>
+        <ul style="padding-left:14px;font-size:11px;color:var(--text-muted);line-height:1.6;">${frus}</ul>
+      </div>
+      ${p.quote?`<div class="persona-quote" style="border-color:${c}">"${p.quote}"</div>`:''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ── Phase 3 ── */
+function startInterviews() {
+  state.current = 0; state.interviews = [];
+  showPhase(3); loadInterview();
+}
+
+async function loadInterview() {
+  const p = state.personas[state.current];
+  const i = state.current;
+  const c = COLORS[i], av = AVATARS[i];
+  state.followupAsked = false;
+
+  $('interview-label').textContent = `Phase 3 of 4 · Interview ${i+1} of ${state.personas.length}`;
+  $('interview-title').textContent  = `Interviewing ${p.name}`;
+  $('interview-sub').textContent    = `Listen to what ${p.name.split(' ')[0]} shares. Then ask one follow-up question.`;
+
+  $('active-persona').style.borderLeftColor = c;
+  $('active-persona').innerHTML = `
+    <div class="active-persona-avatar">${av}</div>
+    <div>
+      <div class="active-persona-name" style="color:${c}">${p.name}</div>
+      <div class="active-persona-role">${p.role}</div>
+      <div class="active-persona-context">${p.context}</div>
+    </div>
+  `;
+
+  $('thread').innerHTML = '';
+  $('followup-section').classList.add('hidden');
+  $('next-section').classList.add('hidden');
+
+  showLoading(`Getting ${p.name.split(' ')[0]}'s perspective...`);
+  try {
+    const insights = await genInsights(p, state.problem);
+    hideLoading();
+    state.interviews[i] = { persona:p, color:c, insights, followup:null, answer:null };
+    addBubble('persona', p.name, c, insights);
+    $('followup-input').value = '';
+    $('followup-section').classList.remove('hidden');
+    $('followup-input').focus();
+  } catch(e) { hideLoading(); addBubble('persona','Error',c,e.message); }
+}
+
+async function handleFollowup() {
+  const q = $('followup-input').value.trim();
+  if (!q || state.followupAsked) return;
+  state.followupAsked = true;
+  $('followup-section').classList.add('hidden');
+  const p = state.personas[state.current];
+  const c = COLORS[state.current];
+  addBubble('you','You',c,q);
+  state.interviews[state.current].followup = q;
+  showLoading(`${p.name.split(' ')[0]} is responding...`);
+  try {
+    const ans = await genFollowup(p, state.problem, state.interviews[state.current].insights, q);
+    hideLoading();
+    addBubble('persona', p.name, c, ans);
+    state.interviews[state.current].answer = ans;
+  } catch(e) { hideLoading(); }
+  showNext();
+}
+
+function showNext() {
+  const isLast = state.current >= state.personas.length - 1;
+  $('next-btn').textContent = isLast
+    ? 'Generate Opportunity Brief →'
+    : `Next: ${state.personas[state.current+1].name} →`;
+  $('next-section').classList.remove('hidden');
+}
+
+async function nextPersona() {
+  const isLast = state.current >= state.personas.length - 1;
+  if (isLast) {
+    showPhase(4);
+    showLoading('Synthesising opportunity brief...');
+    try {
+      const brief = await genBrief();
+      hideLoading();
+      $('brief').innerHTML = marked.parse(brief);
+    } catch(e) { hideLoading(); $('brief').innerHTML = `<p style="color:#e05a5a">${e.message}</p>`; }
+  } else {
+    state.current++;
+    loadInterview();
+  }
+}
+
+/* ── Claude calls ── */
+async function genPersonas(problem) {
+  const system = `You are an expert UX researcher. Generate 3 distinct, realistic user personas for the given product idea. Return ONLY a valid JSON array of exactly 3 persona objects with keys: name (string), role (string, max 60 chars), age (number), context (string, max 120 chars), goals (string, max 100 chars), frustrations (array of 3 strings, each max 60 chars), quote (string, max 100 chars). Make personas meaningfully different in seniority, context, and technical ability.`;
+  const text = await claude([{role:'user',content:`Product idea: ${problem}`}], system, 1024);
+  const match = text.trim().match(/\[[\s\S]*\]/);
+  if (!match) throw new Error('Could not parse personas. Please try again.');
+  return JSON.parse(match[0]);
+}
+
+async function genInsights(persona, problem) {
+  const system = `You are roleplaying as ${persona.name}, ${persona.role}. Context: ${persona.context}. Goals: ${persona.goals}. Frustrations: ${persona.frustrations.join(', ')}. A product researcher is asking about your experience with: "${problem}". Respond in first person, naturally, as in a real discovery interview. Share 3-4 specific, honest insights. Be concrete — mention tools, workarounds, moments of frustration. Do NOT sell the product idea. Under 200 words, conversational, no bullet points.`;
+  return await claude([{role:'user',content:'Tell me about your experience with this problem.'}], system, 512);
+}
+
+async function genFollowup(persona, problem, insights, question) {
+  const system = `You are roleplaying as ${persona.name}, ${persona.role}. Context: ${persona.context}. Frustrations: ${persona.frustrations.join(', ')}. You already shared thoughts on "${problem}". Answer the follow-up question honestly, in character, under 120 words.`;
+  return await claude([
+    {role:'user',content:`My thoughts: ${insights}`},
+    {role:'assistant',content:insights},
+    {role:'user',content:question}
+  ], system, 300);
+}
+
+async function genBrief() {
+  const summary = state.interviews.map((iv,i)=>{
+    const lines = [`Persona ${i+1}: ${iv.persona.name} (${iv.persona.role})`, `Insights: ${iv.insights}`];
+    if(iv.followup) lines.push(`Follow-up: ${iv.followup}`, `Answer: ${iv.answer}`);
+    return lines.join('\n');
+  }).join('\n\n---\n\n');
+
+  const system = `You are a senior product manager synthesising discovery research. Based on 3 user interviews about "${state.problem}", produce a structured opportunity brief in markdown.
+
+Use this exact structure:
+
+## Opportunity Brief: [concise product title]
+
+### Executive Summary
+[3 sentences: problem, who has it, opportunity size]
+
+### Key Pain Points
+[Ranked list, note which personas mentioned each]
+
+### Unmet Needs
+| Need | Frequency | Severity |
+|------|-----------|----------|
+
+### Surprising Insights
+[2-3 non-obvious findings from interviews]
+
+### What's Working Today
+[How people solve this now and what that implies]
+
+### PM Recommendation
+
+**Verdict:** [Build / Pivot / Don't Build]
+
+[2-3 sentences with specific interview evidence]
+
+**Core value proposition:** ...
+**Biggest risk:** ...
+**First thing to validate:** ...
+
+### Next Steps
+1. ...
+
+---
+*Generated by AI Discovery Simulator · [romanmartins.com](https://romanmartins.com)*
+
+Be direct. Ground every claim in interview evidence.`;
+
+  return await claude([{role:'user',content:`Interviews:\n\n${summary}`}], system, 2048);
+}
+
+async function claude(messages, system, max_tokens=1024) {
+  const res = await fetch(API, {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body: JSON.stringify({messages, system, max_tokens})
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(()=>({}));
+    throw new Error(e?.error ?? `Server error ${res.status}`);
+  }
+  const d = await res.json();
+  return d.content?.[0]?.text ?? '';
+}
+
+/* ── UI helpers ── */
+function addBubble(role, name, color, text) {
+  const wrap = document.createElement('div');
+  wrap.className = `bubble bubble-${role}`;
+  const label = document.createElement('span');
+  label.className = 'bubble-role';
+  label.textContent = role === 'persona' ? name : 'You';
+  if (role === 'persona') label.style.color = color;
+  const body = document.createElement('div');
+  body.className = 'bubble-body';
+  if (role === 'persona') body.style.borderLeftColor = color;
+  body.innerHTML = marked.parse(text);
+  wrap.appendChild(label); wrap.appendChild(body);
+  $('thread').appendChild(wrap);
+  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function showLoading(t) { $('loading-text').textContent = t; $('loading').classList.remove('hidden'); }
+function hideLoading()   { $('loading').classList.add('hidden'); }
+</script>
+</body>
+</html>
