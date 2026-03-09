@@ -410,10 +410,8 @@ Tier: quick-win = visible value within 4 weeks, low/medium effort. strategic-bet
 Rank quick-wins first by impact DESC.`;
 
   const raw = await call([{ role:'user', content:ctx }], sys, 1200);
-  const m = raw.trim().match(/\[[\s\S]*\]/);
-  if (!m) throw new Error('Could not parse response. Please try again.');
-  const list = JSON.parse(m[0]);
-  if (!Array.isArray(list) || !list.length) throw new Error('No opportunities returned. Please try again.');
+  const list = parseJsonArray(raw);
+  if (!list || !list.length) throw new Error('No opportunities returned. Please try again.');
   return list;
 }
 
@@ -523,6 +521,18 @@ function mkCard(o, rank, cls) {
     ${tools?`<div class="opp-tools">${tools}</div>`:''}
   `;
   return c;
+}
+
+function parseJsonArray(raw) {
+  let s = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  const start = s.indexOf('[');
+  const end   = s.lastIndexOf(']');
+  if (start === -1 || end === -1) throw new Error('Could not find JSON array in response. Please try again.');
+  s = s.slice(start, end + 1);
+  try { return JSON.parse(s); } catch {
+    s = s.replace(/[\x00-\x1F\x7F]/g, ' ');
+    return JSON.parse(s);
+  }
 }
 
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
