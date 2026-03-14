@@ -225,6 +225,81 @@
       border: 1px solid rgba(99,102,241,0.2);
     }
 
+    /* ── Ghost Creator Suite ──────────────────────────────── */
+    .suite-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: .6rem 0 .1rem;
+    }
+
+    .suite-header-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #30cf43;
+      white-space: nowrap;
+    }
+
+    .suite-header-count {
+      font-size: .68rem;
+      font-weight: 600;
+      color: rgba(48,207,67,0.6);
+      background: rgba(48,207,67,0.08);
+      border: 1px solid rgba(48,207,67,0.2);
+      padding: .1rem .45rem;
+      border-radius: 20px;
+    }
+
+    .suite-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(48,207,67,0.25), transparent);
+    }
+
+    .suite-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: .6rem 0 .1rem;
+    }
+
+    .suite-divider-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: rgba(99,102,241,0.6);
+      white-space: nowrap;
+    }
+
+    .suite-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(99,102,241,0.2), transparent);
+    }
+
+    /* Ghost card variant — green accent */
+    .card.ghost-card::before {
+      background: linear-gradient(90deg, #30cf43, #22a832);
+    }
+
+    .card.ghost-card:hover {
+      border-color: rgba(48,207,67,0.35);
+      box-shadow: 0 8px 28px rgba(48,207,67,0.08);
+    }
+
+    .card.ghost-card .tag {
+      background: rgba(48,207,67,0.08);
+      color: #22a832;
+      border-color: rgba(48,207,67,0.25);
+    }
+
     .footer {
       text-align: center;
       padding: 2rem 1rem;
@@ -298,31 +373,43 @@
     </div>
 
     <div class="grid">
-      <div class="card" onclick="openApp('https://stakeholder-lens.vercel.app', 'Stakeholder Lens')">
-        <div class="icon">🔭</div>
-        <h2>Stakeholder Lens</h2>
-        <p>Paste your roadmap once. Get four audience-specific views — engineering, sales, exec, and customers — generated in seconds by Claude AI.</p>
-        <span class="tag">✦ Live AI Tool</span>
+
+      <!-- Ghost Creator Suite -->
+      <div class="suite-header">
+        <span class="suite-header-label">Ghost Creator Suite</span>
+        <span class="suite-header-count">3 tools</span>
       </div>
 
-      <div class="card" onclick="openApp('https://ghost-pulse.vercel.app', 'Ghost Pulse')">
+      <div class="card ghost-card" onclick="openApp('https://ghost-pulse.vercel.app', 'Ghost Pulse')">
         <div class="icon">◉</div>
         <h2>Ghost Pulse</h2>
         <p>Connect your Ghost publication via Admin API. Get a real-time health dashboard — subscriber breakdown, free-to-paid conversion, cadence, and AI-powered recommendations from your actual numbers.</p>
         <span class="tag">✦ New · Live AI Tool</span>
       </div>
 
-      <div class="card" onclick="openApp('https://ghost-repurpose.vercel.app', 'Ghost Repurpose')">
+      <div class="card ghost-card" onclick="openApp('https://ghost-repurpose.vercel.app', 'Ghost Repurpose')">
         <div class="icon">✦</div>
         <h2>Ghost Repurpose</h2>
         <p>Paste your Ghost newsletter. Get a Twitter thread, LinkedIn post, podcast show notes, re-engagement email, and a key takeaway — all in your voice.</p>
         <span class="tag">✦ Live AI Tool</span>
       </div>
 
-      <div class="card" onclick="openApp('https://ghost-creator-advisor.vercel.app', 'Ghost Creator Advisor')">
+      <div class="card ghost-card" onclick="openApp('https://ghost-creator-advisor.vercel.app', 'Ghost Creator Advisor')">
         <div class="icon">👻</div>
         <h2>Ghost Creator Advisor</h2>
         <p>Enter your Ghost publication metrics. Get a clear diagnosis of your media business — creator stage, biggest lever, and your top 3 recommendations.</p>
+        <span class="tag">✦ Live AI Tool</span>
+      </div>
+
+      <!-- AI PM Toolkit -->
+      <div class="suite-divider">
+        <span class="suite-divider-label">AI PM Toolkit</span>
+      </div>
+
+      <div class="card" onclick="openApp('https://stakeholder-lens.vercel.app', 'Stakeholder Lens')">
+        <div class="icon">🔭</div>
+        <h2>Stakeholder Lens</h2>
+        <p>Paste your roadmap once. Get four audience-specific views — engineering, sales, exec, and customers — generated in seconds by Claude AI.</p>
         <span class="tag">✦ Live AI Tool</span>
       </div>
 
